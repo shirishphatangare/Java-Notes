@@ -1,0 +1,297 @@
+Java MultiThreading
+
+
+
+wait-notify mechanism in Threads --
+
+wait(), notify(), and notifyAll() must be called from within a synchronized context! A thread can't invoke a wait or notify method on an object unless it owns that object's lock.
+
+When the wait() method is invoked on an object, the thread executing that code gives up its lock on the object immediately. However, when notify() is called, that doesn’t mean the thread gives up its lock at that moment.
+If the thread is still completing synchronized code, the lock is not released until the thread moves out of synchronized code. So just because notify() is called doesn’t mean the lock becomes available at that moment.
+
+An object can have many threads waiting on it, and using notify() will affect only one of them. Which one, exactly, is not specified and depends on the JVM implementation, so you should never rely on a particular thread being notified in preference to another.
+In cases in which there might be a lot more waiting, the best way to do this is by using notifyAll().
+
+Methods and Lock Status
+
+Gives up locks
+wait ()
+
+
+Keeps Locks --
+1) notify() (Although the thread will probably
+exit the synchronized code shortly after this call,
+and thus give up its locks.)
+
+2) join()
+3) sleep()
+4) yield() 
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Callable and Future (Since Java 5) (CallableVsRunnableWithFuture.java)
+
+1) Callable and Future are the core abstractions for asynchronous computations. They represent a task and its future result, and create a foundation for almost all other multi-threading abstractions.
+
+Runnable - Create a task to execute without returning a result.
+Callable - Create a task to execute and return a result.
+Future - Get a Future Object holding result of a task. Usually a callable task returns a Future object.
+
+2) Callable and Runnable both are Functional Interfaces and can be implemented with a Lambda.
+
+3) get() method of Future Object delivers a result. If task is completed and result is ready when get() method is executed then we get result instantly, otherwise get() will wait for asynchronous task to complete and return a result.
+
+4) submit(runnable/Callable) returns Future<?> for runnable argument vs Future<T> for callable argument. 
+
+5) In case of Runnable get() method will return null.
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Thread Pool (Since Java 5) (ThreadPoolRevisted.java)
+
+1) Thread creation is an expensive process. Thread pool allows us to reuse already created threads and thus prevents a need to create new thread for each new task.
+2) Ideally don't create/start threads yourself - use ExecutorService instead. ExecutorService creates threads and manages their life cycle.
+3) We can not get a Future result with a Thread class. However, it is very easy to execute a Callable and get a Future result with a Thread Pool (ExecutorService).
+4) An unused ExecutorService should be shut down to allow reclamation of its resources. Always shutdown a Thread pool with shutdown() method.
+5) Thread pool creation -- java.util.concurrent.ExecutorService --- public interface ExecutorService extends Executor
+
+ExecutorService is an Executor that provides methods to manage termination and methods that can produce a Future for tracking progress of one or more asynchronous tasks.
+Method submit() extends base method Executor.execute(java.lang.Runnable) by creating and returning a Future that can be used to cancel execution and/or wait for completion. Methods invokeAny and invokeAll perform the most commonly useful forms of bulk execution, executing a collection of tasks and then waiting for at least one, or all, to complete.
+
+	a) ExecutorService pool = Executors.newCachedThreadPool() -- Creates a thread pool that creates new threads as needed, but will reuse previously constructed threads when they are available.
+	b) ExecutorService pool = Executors.newFixedThreadPool(5) -- Creates a thread pool that reuses a fixed number of threads operating off a shared unbounded queue.
+	c) ExecutorService pool = Executors.newSingleThreadExecutor() -- Creates an Executor that uses a single worker thread operating off an unbounded queue.
+	d) ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4) -- Creates a thread pool that can schedule commands to run after a given delay, or to execute periodically.
+
+
+6) Thread pool can be customized with a Thread Factory.	All above methods have an overloaded variant to accept the ThreadFactory as an argument and use it to create new threads as needed.
+
+newScheduledThreadPool(int corePoolSize) method returns ScheduledExecutorService which has below methods to schedule commands.
+ public interface ScheduledExecutorService extends ExecutorService 
+
+	
+ScheduledFuture<?> schedule(Runnable command,long delay,TimeUnit unit) - Creates and executes a ScheduledFuture (representing pending completion of the task and whose get() method will return null upon completion) that becomes enabled after the given delay.
+
+<V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) - Creates and executes a ScheduledFuture (that can be used to extract result or cancel) that becomes enabled after the given delay.
+	
+
+7) java.util.concurrent.Executors ---
+
+Executors class has Factory and utility methods for Executor, ExecutorService, ScheduledExecutorService, ThreadFactory, and Callable classes. 
+
+This class supports the following kinds of methods:
+	a) Methods that create and return an ExecutorService set up with commonly useful configuration settings.
+	b) Methods that create and return a ScheduledExecutorService set up with commonly useful configuration settings.
+	
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CompletableFuture (Since Java 8) (CompletableFutureRevisited.java)
+
+1) CompletableFuture takes Future to the next level, and allows us to create dependencies between different tasks. For example, to trigger execution of one task/stage on other task/stage's successful completion.
+
+2) Class java.util.concurrent.CompletableFuture<T> implements 2 interfaces - Future<T> and CompletionStage<T>
+
+	CompletableFuture  = Future + CompletionStage
+
+3) If executor argument is not provided, CompletableFuture.supplyAsync will use ForkJoinPool by default
+
+	public static <U> CompletableFuture<U> supplyAsync(Supplier<U> supplier)
+Returns a new CompletableFuture that is asynchronously completed by a task running in the ForkJoinPool.commonPool() with the value obtained by calling the given Supplier.
+
+	public static <U> CompletableFuture<U> supplyAsync(Supplier<U> supplier, Executor executor)
+Returns a new CompletableFuture that is asynchronously completed by a task running in the given executor with the value obtained by calling the given Supplier.
+
+4) thenApply and thenCombine
+
+a) public <U> CompletableFuture<U> thenApply(Function<? super T,? extends U> fn)
+
+Returns a new CompletionStage that, when this stage completes normally, is executed with this stage's result as the argument to the supplied function.
+
+b) public <U,V> CompletableFuture<V> thenCombine(CompletionStage<? extends U> other, BiFunction<? super T,? super U,? extends V> fn)
+
+Returns a new CompletionStage that, when this and the other given stage both complete normally, is executed with the two results as arguments to the supplied function. 
+
+fn - the function to use to compute the value of the returned CompletionStage
+
+c) public CompletableFuture<Void> thenAccept(Consumer<? super T> action)
+
+Returns a new CompletionStage that, when this stage completes normally, is executed with this stage's result as the argument to the supplied action.
+
+action - the action to perform before completing the returned CompletionStage
+
+5) CompletableFuture manages dependencies and orchestrates execution of multiple future instances 
+
+6) thenAccept() accepts a Consumer which do not return a result, whereas thenApply accepts a Function which returns a result.
+
+7) Functions and Actions provided to thenCombine, thenApply and thenAccept are ONLY triggered when current stage is completed normally.
+
+8) handle() method is always executed after stage completion either normally or exceptionally. handle() method is useful to handle exceptions.
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+ForkJoinPool (Since Java 7)
+
+A ForkJoinTask is a thread-like entity that is much lighter weight than a normal thread. Huge numbers of tasks and subtasks may be hosted by a small number of actual threads in a ForkJoinPool, at the price of some usage limitations. As indicated by the name of this class, many programs using ForkJoinTask employ only methods fork() and join(), or derivatives such as invokeAll.
+
+ForkJoinPool is an executorService for running ForkJoinTasks.
+
+1) Executing tasks with no results in parallel with ForkJoinPool (ForkJoinPoolInvokeAll.java)
+
+public static ForkJoinPool commonPool() - Returns the common pool instance
+
+2) public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
+
+Executes the given tasks, returning a list of Futures holding their statues and results when all complete. Future.isDone() is true for each element of the returned list.
+For Callable<Void> tasks, no need to read Future objects.
+
+3) Executing tasks with results and combine results of individual subtasks into a single final result. ( fork() and join() approach ) - (RecursiveTaskDemo.java)
+
+4) Class java.util.concurrent.RecursiveTask<V>
+
+public abstract class RecursiveTask<V> extends ForkJoinTask<V>
+
+For a classic example, here is a task computing Fibonacci numbers:
+
+ class Fibonacci extends RecursiveTask<Integer> {
+   final int n;
+   Fibonacci(int n) { this.n = n; }
+   Integer compute() {
+     if (n <= 1)
+       return n;
+     Fibonacci f1 = new Fibonacci(n - 1);
+     f1.fork();
+     Fibonacci f2 = new Fibonacci(n - 2);
+     return f2.compute() + f1.join();
+   }
+ }
+
+compute() Belongs to class RecursiveTask -- The main computation performed by this task.
+fork() -- Belongs to class ForkJoinTask -- Arranges to asynchronously execute this task in the pool the current task is running in.
+join() -- Belongs to class ForkJoinTask -- Returns the result of the computation when it is done.
+
+fork(), compute() and join() methods together solve problems with a divide and conquer strategy. 
+Main problem is divided into half section - fork and compute. This division continues till a threshold point reach in calculation.
+Once threshold point reach (in fork or compute) tasks start returning and combining values.
+This process continues with sync between compute() and fork-join methods till we get a final result.
+
+
+public <T> T invoke(ForkJoinTask<T> task) -- Performs the given task, returning its result upon completion.
+
+5) Types of ForkJoinTasks - RecursiveAction and RecursiveTask
+
+RecursiveAction is used instead of RecursiveTask when task doesn't return any result but just performs action on data. 
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Synchronization with Locks (Since Java 5)
+
+Synchronized blocks are useful, but they lack flexibility. For example, they require lock acquisition and release to occur in a block-structured way. More recent Lock interface provides more flexible and sophisticated thread synchronization mechanism, than simple "synchronized" statements.
+
+A lock is a tool for controlling access to a shared resource by multiple threads. Commonly, a lock provides exclusive access to a shared resource: only one thread at a time can acquire the lock and all access to the shared resource requires that the lock be acquired first. However, some locks may allow concurrent access to a shared resource, such as the read lock of a ReadWriteLock.
+
+The use of synchronized methods or statements provides access to the implicit monitor lock associated with every object, but forces all lock acquisition and release to occur in a block-structured way: when multiple locks are acquired they must be released in the opposite order, and all locks must be released in the same lexical scope in which they were acquired.
+
+While the scoping mechanism for synchronized methods and statements makes it much easier to program with monitor locks, and helps avoid many common programming errors involving locks, there are occasions where you need to work with locks in a more flexible way. For example, some algorithms for traversing concurrently accessed data structures require the use of "hand-over-hand" or "chain locking": you acquire the lock of node A, then node B, then release A and acquire C, then release B and acquire D and so on. Implementations of the Lock interface enable the use of such techniques by allowing a lock to be acquired and released in different scopes, and allowing multiple locks to be acquired and released in any order.
+
+With this increased flexibility comes additional responsibility. The absence of block-structured locking removes the automatic release of locks that occurs with synchronized methods and statements. In most cases, the following idiom should be used:
+
+     Lock l = new ReentrantLock();
+     l.lock();
+     try {
+         // access the resource protected by this lock
+     } finally {
+         l.unlock(); // This ensures lock unlocking even in case of an exception
+     }
+ 
+When locking and unlocking occurs in different scopes, care must be taken to ensure that all code that is executed while the lock is held protected by try-finally or try-catch to ensure that the lock is released when necessary.
+
+As the name says, ReentrantLock allow threads to enter into lock on a resource more than once. When the thread first enters into lock, a hold count is set to one. Before unlocking the thread can re-enter into lock again and every time hold count is incremented by one. For every unlock request, hold count is decremented by one and when hold count is 0, the resource is unlocked.
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Problems in concurrency and multi-threading
+
+Working with concurrent threads can be challenging and can create a new class of errors. Knowing them is the first step for preventing them.
+
+1) Data Races
+
+Several threads access the same memory location (shared resource) at the same time, and at least one of them is write.
+Data race can be fixed by using Atomic data types or putting operations in Synchronized block or using Lock interface to control simultaneous access of shared resources by 2 or more threads.
+
+2) Race conditions
+
+Multiple threads access a shared variable, and the result depends on the execution order of the threads. Race conditions can be fixed by using Synchronized methods.
+Typical example of race condition is bank account which is operated by 2 threads and depending on execution order of these threads, account balance can be negative.
+Data Races and Race conditions impact final outcome of an operation.
+
+Liveness problems -- 
+
+3) Deadlock - When 2 or more threads are blocked forever, waiting for each other.
+Example of deadlock scenario is 2 bowing friends, each will wait for other to finish bow and then only proceed with bowing. When 2 friends bow at the same time while one waiting for other to bow first and vice a versa. This is deadlock scenario.
+
+4) LiveLock - 2 or more threads are too busy responding to each other to resume work, but none progressing.
+Example of liveness problem can be explained considering 2 people in a corridor. One person moving to left whereas other person moving to right to give a way to each other. But they are too busy moving left and right without moving ahead or doing some useful work.
+
+5) Resource starvation - A thread is unable to gain regular access to the shared resources and is unable to make any progress. 
+Liveness is a special case of starvation. Liveness can occur because of starvation.
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Thread-Safe Data Structures
+
+Providing thread-safety for a variable from a scratch is tedious, boring, and error-prone. Delegating thread-safety to already existing and well-tested data structures, allows us to save a lot of time during development and testing.
+
+
+1) Atomic Data types - java.util.concurrent.atomic package 
+
+AtomicBoolean, AtomicInteger, AtomicLong, AtomicIntegerArray, AtomicLongArray etc. 
+
+	a) Updated atomically i.e. as a single operation
+	b) Atomic types guarantee Compare-And-Set (CAS) operations atomically.
+	c) You can think of these are wrapper of primitive types boolean, integer and long, with the difference: they are designed to be safely used in multi-threaded context.
+	d) They are called atomic variables because they provide some operations that cannot be interfered by multiple threads. Here’s to name a few:
+
+	incrementAndGet(): Atomically increments by one the current value.
+	decrementAndGet(): Atomically decrements by one the current value.
+
+	These operations are guaranteed to execute atomically using machine-level instructions on modern processors.
+
+	e) Using atomic variables help avoiding the overhead of synchronization on a single primitive variable, so it is more efficient than using synchronization/locking mechanism.
+
+2) Concurrent Collections -  
+
+	a) Concurrent Collections benefit from Compare-And-Set (CAS) operations and enable non-blocking thread safety.
+	b) Concurrent Collections do not allow null for key or value.
+	c) ConcurrentHashMap and ConcurrentLinkedQueue - HashMap and LinkedList are probably the most widely used collections in Java, which is why, it is important to use efficient thread-safe      		implementation of these collections.
+
+3) Blocking Queues
+
+	a) Consumer-producer problem is common in concurrent programming. Fortunately, Java provides a family of efficient data structures like Blocking Queues for this widespread problem.
+	b) Blocking Queue waits for an element to be available instead of returning null. take() method of a Blocking Queue waits for an element to be available in a queue before returning.
+    c) Blocking Queue also waits for a space to be available in a queue when adding an element using offer() method.
+
+4) Copy-on-Write Collections
+
+	a) Thread-safe collections used in read-heavy scenarios should be optimized for read operations, and it can tolerate less-efficient writes. Copy-on-write collections address this issue.
+	b) ConcurrentModificationException is thrown when a thread tries to write and iterate an array list at the same time. Copy-on-Write Collections provide Thread-safe and Modification-safe alternative. 
+	c) In Copy-on-Write collection, read operation works with a snapshot of collection and therefore no blocking required (this makes them very fast). On the other hand every write operation (add or set) creates a fresh copy of underlying array (expensive operation !). Write operations are protected by a lock and only one write is allowed at a time. Thus, Copy-on-Write collections are ideal in scenario where read operations vastly outnumber write operations.
+	d) Examples are CopyOnWriteArrayList and CopyOnWriteArraySet
+	e) In short NON-blocking access for reads but creates a new copy on every write operation. Write operations are protected by a lock and only one write is allowed at a time.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

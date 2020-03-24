@@ -1,0 +1,112 @@
+
+
+// File: src/main/java/gradle/sample/Sample.java 
+package gradle.sample; 
+ 
+import java.util.ResourceBundle; 
+ 
+/** 
+* Read welcome message from external properties file 
+* <code>messages.properties</code>. 
+*/ 
+public class Sample { 
+ 
+    public Sample() { 
+    } 
+ 
+    /** 
+    * Get <code>messages.properties</code> file 
+    * and read the value for <em>welcome</em> key. 
+    * 
+    * @return Value for <em>welcome</em> key 
+    *  from <code>messages.properties</code> 
+    */ 
+    public String getWelcomeMessage() { 
+        final ResourceBundle resourceBundle = ResourceBundle.getBundle("messages"); 
+      final String message = resourceBundle.getString("welcome"); 
+      return message; 
+    } 
+} 
+
+
+
+
+---------------------------------------------------------------------------------
+
+
+# File: src/main/resources/gradle/sample/messages.properties 
+welcome = Welcome to Gradle! 
+
+
+---------------------------------------------------------------------------------
+
+
+
+
+        // File: src/test/java/gradle/sample/SampleTest.java 
+        package gradle.sample; 
+ 
+        import org.junit.Assert; 
+        import org.junit.Test; 
+ 
+        public class SampleTest { 
+ 
+          @Test 
+          public void readWelcomeMessage() { 
+            final Sample sample = new Sample(); 
+ 
+            final String realMessage = sample.getWelcomeMessage(); 
+ 
+            final String expectedMessage = "Welcome to Gradle."; 
+            Assert.assertEquals( 
+              "Get text from properties file", 
+              expectedMessage, realMessage); 
+          } 
+ 
+      }  
+
+---------------------------------------------------------------------------------
+ 
+ 
+       apply plugin: 'java' 
+ 
+        repositories { 
+            jcenter() 
+        } 
+ 
+        dependencies { 
+            testCompile('junit:junit:4.12') 
+        } 
+
+
+ ---------------------------------------------------------------------------------
+
+ 
+ // File: src/main/java/gradle/sample/SampleApp.java 
+package gradle.sample; 
+ 
+public class SampleApp { 
+ 
+    public SampleApp() { 
+    } 
+ 
+    public static void main(String[] args) { 
+        final SampleApp app = new SampleApp(); 
+        app.welcomeMessage(); 
+    } 
+ 
+    public void welcomeMessage() { 
+        final String welcomeMessage = readMessage(); 
+        showMessage(welcomeMessage); 
+    } 
+ 
+    private String readMessage() { 
+        final Sample sample = new Sample(); 
+        final String message = sample.getWelcomeMessage(); 
+        return message; 
+    } 
+ 
+    private void showMessage(final String message) { 
+        System.out.println(message); 
+    } 
+} 

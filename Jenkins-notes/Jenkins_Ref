@@ -1,0 +1,44 @@
+Reference Pipeline
+Overview
+
+This is an internal “Open Source Project”. This is a community driven approach to developing Jenkins pipelines. The Reference Pipeline can be found at keyword: “reference pipeline” or here at Jenkins Reference Pipeline
+
+Jenkins shared libraries are a way to eliminate duplicate code from pipelines. Code that can be reused is placed into individual groovy scripts. The shared library repository can be defined globally or at the folder level within the Jenkins environment. The shared libraries can then be used within pipelines.
+
+The Enterprise Jenkins team has created a set of shared libraries that can be used simply by adding one line of code to the top of your pipelines.
+
+Jenkins Pipeline is a suite of plugins that supports implementing and integrating continuous delivery pipelines into Jenkins. Pipeline provides an extensible set of tools for modeling simple-to-complex delivery pipelines “as code” via the Pipeline DSL. More information on how to form Jenkins pipelines are listed in the Jenkins Pipeline Wiki
+
+Example:
+
+library 'reference-pipeline'
+
+pipeline {
+
+}
+
+---------------------
+
+Deploying to PCF
+
+Overview:
+
+To deploy to PCF you will need to use Jenkins to orchastrate the deploy using a Service Account behind PAM.
+
+Using the Reference Pipeline to Deploy to PCF:
+This stage will download the CF CLI for you onto the Jenkin build server. Then run the cf commands that are passed into it.
+
+You must add a reference to another shared library that can retrieve your Service Account password from PAM. This needs to be added to the top of your Jenkinsfile. There are additional ways to define multiple shared library references: Defining shared libraries
+
+	Example:
+
+	library 'reference-pipeline'
+	library 'AppServiceAccount'
+
+	pipeline{
+
+Note: This library will only work if you have a service account and your application is in your EAI repository. Click the link above to learn how to get a service account.
+
+
+------------------------------------------------------------
+

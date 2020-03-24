@@ -1,0 +1,504 @@
+library 'reference-pipeline' // Jenkins shared library to eliminate duplicate code from pipelines
+library 'AppServiceAccount'  // Jenkins shared library to deploy to PCF
+
+pipeline{   // All valid Declarative Pipelines must be enclosed within a pipeline block
+  
+  /* The agent section specifies where the entire Pipeline, or a specific stage, will execute in the Jenkins environment depending on where the agent section is placed. The section must be defined at the top-level inside the pipeline block, but stage-level usage is optional. */
+  
+  // label - Execute the Pipeline, or stage, on an agent available in the Jenkins environment with the provided label.
+  
+  agent { label 'BuildNode-10278||BuildNode-10279||BuildNode-10280||BuildNode-10282||BuildNode-10283' }
+
+  /* Environment variables can be set globally per pipeline, or per stage. Read environment variables using syntax $(APPNAME) */
+  
+  environment{
+    APPNAME="CoreHCM"
+    HOSTNAME="csds-corehcm"
+    PAMID="17510"
+    NEXUS=credentials('Jenkins_Nexus_Id')
+	
+	// The environment variable name starts with ORG_GRADLE_PROJECT_ and is followed by the property name
+	// Properties like nexusUser, nexusPassword, pem_str and pem_pass are used in build.gradle
+	
+    ORG_GRADLE_PROJECT_nexusUser="$NEXUS_USR"
+    ORG_GRADLE_PROJECT_nexusPassword="$NEXUS_PSW"
+    WTCDEV2="https://api.sys.wtcdev2.paas.fedex.com"
+    EDCBO1="https://api.sys.edcbo1.paas.fedex.com"
+    EAI_NUM="3530979"
+    CLOUD_LOG_HOST_DEV="c0010137.test.cloud.fedex.com"
+    CLOUD_LOG_HOST_PROD="c0014584.prod.cloud.fedex.com"
+  }
+
+  /* The options directive allows configuring Pipeline-specific options from within the Pipeline itself. Pipeline provides a number of these options, such as buildDiscarder, but they may also be provided by plugins, such as timestamps. */
+  
+  options { 
+    buildDiscarder(logRotator(numToKeepStr: '10')) // Persist artifacts and console output for the specific number of recent Pipeline runs (10 here)
+  } 
+
+  /* The triggers directive defines the automated ways in which the Pipeline should be re-triggered. */
+ 
+  triggers {
+  
+  /* Jenkins GitLab Plugin - Build trigger that allows GitLab to trigger Jenkins builds when code is pushed or a merge request is  created. */
+  
+  gitlab(						
+        triggerOnPush: true // Why this is not working?
+    )
+  }
+  
+  /* A section defining tools to auto-install and put on the PATH on agent node. */
+  /* Supported Tools -  maven, jdk, gradle */
+  /* The tool name must be pre-configured in Jenkins under Manage Jenkins → Global Tool Configuration.*/
+
+  tools {
+    jdk 'JAVA_8'
+  }
+  
+  /* Containing a sequence of one or more stage directives, the stages section is where the bulk of the "work" described by a Pipeline will be located. At a minimum it is recommended that stages contain at least one stage directive for each discrete part of the continuous delivery process, such as Build, Test, and Deploy.*/
+  
+  stages{
+    stage('build'){  // stage-1 - build
+      environment{
+
+		/* environment directive supports a special helper method credentials() which can be used to access pre-defined Credentials by their identifier in the Jenkins environment. */
+		
+        ORG_GRADLE_PROJECT_pem_str=credentials('PEM_STR_DEV')
+        ORG_GRADLE_PROJECT_pem_pass=credentials('PEM_PASS_DEV')
+      }
+	  
+	  /* The when directive allows the Pipeline to determine whether the stage should be executed depending on the given condition. The when directive must contain at least one condition. If the when directive contains more than one condition, all the child conditions must return true for the stage to execute. This is the same as if the child conditions were nested in an allOf condition (see the examples below). If an anyOf condition is used, note that the condition skips remaining tests as soon as the first "true" condition is found. */
+	  
+      when{ branch 'Offshore-Dev-v1' }  /* Execute the stage when the branch being built matches the branch pattern. 
+	                                       Note that this only works on a multibranch Pipeline. */
+      
+	  /* The steps section defines a series of one or more steps to be executed in a given stage directive. 
+	     The steps section must contain one or more steps. */
+
+	  steps {
+		// use 'sh' when host is linux or else use 'bat' for windows
+        sh 'chmod 775 gradlew' // step1
+        sh './gradlew clean build jacocoTestReport' // step2
+      }
+
+	  /* The post section defines one or more additional steps that are run upon the completion of a Pipeline’s or stage’s run.
+		post can support any of the following post-condition blocks: always, changed, fixed, regression, aborted, failure, success, unstable, unsuccessful, and cleanup. These condition blocks allow the execution of steps inside each condition depending on the completion status of the Pipeline or stage. */
+	  
+      post {
+        success { // Only run the steps in post if the current Pipeline’s or stage’s run has a "success" status.
+		
+		  /* To collect our test results and artifacts, we will use the post section. */
+          junit 'build/test-results/**/*.xml' 		// store test results in this folder
+		  
+		  /* Jacoco plugin - Allows to configure various aspects of the JaCoCo code coverage report. The paths define where the various types of files can be found in the workspace, inclusions and exclusions allow to exclude certain class files. And the coverage thresholds allow to configure how much coverage is necessary to make the build green. */
+		  
+          jacoco(  									
+            skipCopyOfSrcFiles: true,
+            exclusionPattern: '**/com/fedex/csds/core/api/**,**/com/fedex/csds/core/dao/model/**,**/com/fedex/csds/api/**',
+            sourceExclusionPattern: '**/com/fedex/csds/core/api/**,**/com/fedex/csds/core/dao/model/**,**/com/fedex/csds/api/**'
+         )
+        }
+      }
+    }
+    
+    stage('Get Tag Version'){ // stage-2 - Get Tag Version
+      agent { label 'BuildNode-10278||BuildNode-10279||BuildNode-10280||BuildNode-10282||BuildNode-10283' } // agent for this stage
+      steps{
+        sh 'chmod 775 gradlew'
+		
+        /* The script step takes a block of Scripted Pipeline and executes that in the Declarative Pipeline.*/
+		
+		script{
+		  // The pipeline sh step
+          VERSION = sh(             
+            script: './gradlew -q getVersion', // Runs a Bourne shell script, typically on a Unix node. Multiple lines are accepted.
+            returnStdout: true // standard output from the task is returned as the step value as a String,
+          ).trim()
+        }
+      }
+    }
+    
+    stage('Nexus Eval Stage'){ // stage-3 - Nexus Eval Stage
+      when{ branch 'Offshore-Dev-v1' }  
+        steps{
+		  // Nexus Platform Plugin - nexusPolicyEvaluation: Invoke Nexus Policy Evaluation
+		  // iqStage - Controls the stage the policy evaluation will be run against on the Nexus IQ Server.
+          nexusPolicyEvaluation iqApplication: "DataServices-${EAI_NUM}", iqStage: 'build'    
+        }
+    }
+	
+    stage('Sonarqube scan'){ // stage-4 - Sonarqube scan
+      when{ branch 'Offshore-Dev-v1' }  
+      steps {
+        script {    
+		
+		  /* tool pipeline step - Binds a tool installation to a variable (the tool home directory is returned). Only tools already configured in Configure System are available here. */
+		
+          def scannerHome = tool 'SonarQube_Scanner';  
+		  
+		  /* withSonarQubeEnv Will pick the global server connection you have configured. If you have configured more than one global server connection, you can specify its name */
+		  
+          withSonarQubeEnv('SonarQube') {    
+            sh "${scannerHome}/bin/sonar-scanner \
+            -Dproject.settings=sonar-project.properties"
+          }
+        }            
+      }
+    }
+   
+    stage('Add PCF SyslogDrain dev'){ // stage-5 - Add PCF SyslogDrain dev
+      when{ branch 'Offshore-Dev-v1' }
+      steps{
+        script {
+          try {
+            pcfDeploy pamId: "${PAMID}",
+              url: "${WTCDEV2}",
+              space: 'development',
+			  
+			  /* Create the user-provided service instance, specifying the URL of the service with the -l option.
+				 
+				 cf cups SERVICE_INSTANCE -l syslog://example.log-aggregator.com 
+				 
+				 User-provided service instances enable developers to stream app logs to a syslog compatible aggregation or analytics service that isn’t available in the marketplace.
+			  */
+              cfcmd: 'cups ${APPNAME}-SyslogDrain -l syslog://${CLOUD_LOG_HOST_DEV}:2514'
+			  
+          } catch (Exception e){
+            pcfDeploy pamId: "${PAMID}",
+              url: "${WTCDEV2}",
+              space: 'development',
+			  // Update user-provided service instance
+              cfcmd: 'uups ${APPNAME}-SyslogDrain -l syslog://${CLOUD_LOG_HOST_DEV}:2514'
+          }
+        }
+      }
+    } 
+        
+     stage('pcf deploy to development') { // stage-6 - pcf deploy to development
+      when{ branch 'Offshore-Dev-v1' }
+      environment{
+        CONFIG=credentials('ConfigServer_dev')
+        SPRING_PROFILE="dev"
+        PEM_STR=credentials('PEM_STR_DEV')
+        PEM_PASS=credentials('PEM_PASS_DEV')
+        DH_UNPW=credentials('DataHub_L4_Unpw')
+      }  
+      steps{
+         pcfDeploy pamId: "${PAMID}",      // Where pcfDeploy is defined?
+         url: "${WTCDEV2}",
+         space: 'development',
+         cfcmd: 'apps',    // List all apps in the target space
+		 // Difference between cfcmd and extCfCmd
+         extCfCmd: [ 'push ${APPNAME} --no-start --hostname ${HOSTNAME}-${SPRING_PROFILE} -p build/libs/*.jar', 
+             'se ${APPNAME} PEM_PASS ${PEM_PASS}',  
+             'se ${APPNAME} PEM_STR ${PEM_STR}', 
+             'se ${APPNAME} SPRING_PROFILES_ACTIVE ${SPRING_PROFILE}' , 
+             'se ${APPNAME} SPRING_CONFIG_USER "${CONFIG_USR}"',
+             'se ${APPNAME} SPRING_CONFIG_PASS "${CONFIG_PSW}"',
+             'se ${APPNAME} DATAHUB_USER "${DH_UNPW_USR}"',
+             'se ${APPNAME} DATAHUB_PASS "${DH_UNPW_PSW}"',
+             'se ${APPNAME} APPDYNAMICS_AGENT_APPLICATION_NAME "DataServices-${EAI_NUM}"',
+             'se ${APPNAME} APPDYNAMICS_AGENT_TIER_NAME "CoreHCM-${SPRING_PROFILE}-${EAI_NUM}"',
+             'create-service appdynamics fedex1-test "${APPNAME}-appd"',
+             'bind-service ${APPNAME} ${APPNAME}-appd',
+             //'bind-service ${APPNAME} ${APPNAME}-SyslogDrain', // To stream app logs to the service, bind the user-provided 
+                                                                    service instance to your app.
+
+             'start ${APPNAME}'
+         ]
+         office365ConnectorSend message: "latest development tag pushed to dev env", status:"Complete", webhookUrl:'https://outlook.office.com/webhook/f3e63470-29f0-4614-9730-5be59832a530@b945c813-dce6-41f8-8457-5a12c2fe15bf/IncomingWebhook/b4c4376272684f2c8f8bc0744af0d03b/8afad924-eba7-4405-a52c-0516ad170eeb'
+       }
+    }
+
+    stage('PCF SyslogDrain release'){  // stage-7 - PCF SyslogDrain release
+      when{ 
+        branch 'development'
+        expression { // Execute the stage when the specified Groovy expression evaluates to true. - Part of when
+            script {
+                return getReleaseTag()
+            }
+        }  
+      }
+      steps{
+        script {
+             try {
+                 pcfDeploy pamId: "${PAMID}",
+                 url: "${WTCDEV2}",
+                 space: 'release',
+                 cfcmd: 'cups ${APPNAME}-SyslogDrain -l syslog://${CLOUD_LOG_HOST_DEV}:2514'
+             } 
+             catch (Exception e){
+                pcfDeploy pamId: "${PAMID}",
+                 url: "${WTCDEV2}",
+                 space: 'release',
+                 cfcmd: 'uups ${APPNAME}-SyslogDrain -l syslog://${CLOUD_LOG_HOST_DEV}:2514'
+             }
+          }
+       }
+    }
+    
+    stage('pcf deploy to release'){  // stage-8 - pcf deploy to release
+        when{ 
+            branch 'development'
+            expression {
+              script {
+                  return getReleaseTag()
+              }
+            }  
+        }
+        environment{
+          CONFIG=credentials('ConfigServer_rel')
+          SPRING_PROFILE="rel"
+          PEM_STR=credentials('PEM_STR_DEV')
+          PEM_PASS=credentials('PEM_PASS_DEV')
+          DH_UNPW=credentials('DataHub_L4_Unpw')
+        }  
+        steps{
+        
+          //go ahead and publish
+          sh './gradlew publish'
+          
+          office365ConnectorSend message: "Beginning deployment to RELEASE ", status:"Starting", webhookUrl:'https://outlook.office.com/webhook/eaba08c7-1ac2-41db-9a42-9f0fa4b902ff@b945c813-dce6-41f8-8457-5a12c2fe15bf/IncomingWebhook/794e964175524934a3130b303d1d4c6e/8afad924-eba7-4405-a52c-0516ad170eeb'
+
+          pcfDeploy pamId: "${PAMID}",
+          url: "${WTCDEV2}",
+          space: 'release',
+          cfcmd: 'apps',
+          extCfCmd: [ 'push ${APPNAME} --no-start --hostname ${HOSTNAME}-${SPRING_PROFILE} -i 2 -b java_current -p build/libs/*.jar', 
+            'se ${APPNAME} PEM_PASS ${PEM_PASS}',  
+            'se ${APPNAME} PEM_STR ${PEM_STR}',
+            'se ${APPNAME} SPRING_PROFILES_ACTIVE ${SPRING_PROFILE}',
+            'se ${APPNAME} SPRING_CONFIG_USER "${CONFIG_USR}"',
+            'se ${APPNAME} SPRING_CONFIG_PASS "${CONFIG_PSW}"',
+            'se ${APPNAME} DATAHUB_USER "${DH_UNPW_USR}"',
+            'se ${APPNAME} DATAHUB_PASS "${DH_UNPW_PSW}"',
+            'se ${APPNAME} APPDYNAMICS_AGENT_APPLICATION_NAME "DataServices-${EAI_NUM}"',
+            'se ${APPNAME} APPDYNAMICS_AGENT_TIER_NAME "CoreHCM-${SPRING_PROFILE}-${EAI_NUM}"',
+            'create-service appdynamics fedex1-test "${APPNAME}-appd"',
+            'bind-service ${APPNAME} ${APPNAME}-appd',
+        //bind to the log drain?
+            'start ${APPNAME}'] 
+            
+            office365ConnectorSend message: "Finished deployment to RELEASE ", status:"Complete", webhookUrl:'https://outlook.office.com/webhook/eaba08c7-1ac2-41db-9a42-9f0fa4b902ff@b945c813-dce6-41f8-8457-5a12c2fe15bf/IncomingWebhook/794e964175524934a3130b303d1d4c6e/8afad924-eba7-4405-a52c-0516ad170eeb'
+       }
+    }
+    
+    stage('pcf deploy for office'){  // stage-9 - pcf deploy for office
+        when{ 
+          branch 'development'
+          expression {
+            script {
+                return getReleaseTag()
+            }
+          }
+        }
+        environment{
+          CONFIG=credentials('ConfigServer_rel')
+          SPRING_PROFILE="fxo"
+          PEM_STR=credentials('PEM_STR_DEV')
+          PEM_PASS=credentials('PEM_PASS_DEV')
+          DH_UNPW=credentials('DataHub_L4_Unpw')
+        }  
+        steps{
+          pcfDeploy pamId: "${PAMID}",
+          url: "${WTCDEV2}",
+          space: 'development',
+          cfcmd: 'apps',
+          extCfCmd: [ 'push ${APPNAME}-${SPRING_PROFILE} --no-start --hostname ${HOSTNAME}-${SPRING_PROFILE} -i 1 -b java_current -p build/libs/*.jar', 
+            'se ${APPNAME}-fxo PEM_PASS ${PEM_PASS}',  
+            'se ${APPNAME}-fxo PEM_STR ${PEM_STR}',
+            'se ${APPNAME}-fxo SPRING_PROFILES_ACTIVE ${SPRING_PROFILE}',
+            'se ${APPNAME}-fxo SPRING_CONFIG_USER "${CONFIG_USR}"',
+            'se ${APPNAME}-fxo SPRING_CONFIG_PASS "${CONFIG_PSW}"',
+            'se ${APPNAME}-fxo DATAHUB_USER "${DH_UNPW_USR}"',
+            'se ${APPNAME}-fxo DATAHUB_PASS "${DH_UNPW_PSW}"',
+            'start "${APPNAME}-${SPRING_PROFILE}"'] 
+       }
+    }
+
+    stage('download Nexus file'){ // stage-10 - download Nexus file
+      when{ branch 'master' }
+      steps{
+          downloadNexusArtifact groupId:"com.fedex.csds", // Where downloadNexusArtifact is defined?
+          artifactId: "CSDSApi",
+          repo: "3530979-CS-DataServices",
+          release: true,
+          extension: "jar",
+          downloadFileName: "${APPNAME}-Api.jar",
+          version: "${VERSION}"
+          
+      }
+    }
+    
+    stage('pcf deploy to staging'){ // stage-11 - pcf deploy to staging
+      environment{
+        CONFIG=credentials('ConfigServer_stg')
+        SPRING_PROFILE="stg"
+        PEM_STR=credentials('PEM_STR_PROD')
+        PEM_PASS=credentials('PEM_PASS_PROD')
+        DH_UNPW=credentials('DataHub_L4_Unpw')
+      }  
+      steps{
+      
+         office365ConnectorSend message: "Beginning deployment to STAGE ", status:"Starting", webhookUrl:'https://outlook.office.com/webhook/eaba08c7-1ac2-41db-9a42-9f0fa4b902ff@b945c813-dce6-41f8-8457-5a12c2fe15bf/IncomingWebhook/794e964175524934a3130b303d1d4c6e/8afad924-eba7-4405-a52c-0516ad170eeb'
+         
+         //set up the log drain
+         //script {
+         //    try {
+         //       pcfDeploy pamId: "${PAMID}",
+         //       url: "${EDCBO1}",
+         //       space: 'staging',
+         //       cfcmd: 'cups ${APPNAME}-SyslogDrain -l syslog://${CLOUD_LOG_HOST_DEV}:2514'
+         //    } 
+         //    catch (Exception e){
+         //       pcfDeploy pamId: "${PAMID}",
+         //       url: "${EDCBO1}",
+         //       space: 'staging',
+         //       cfcmd: 'uups ${APPNAME}-SyslogDrain -l syslog://${CLOUD_LOG_HOST_DEV}:2514'
+         //    }
+         //}
+         
+         pcfDeploy pamId: "${PAMID}",
+         url: "${EDCBO1}",
+         space: 'staging',
+         cfcmd: 'apps',
+         extCfCmd: [ 'push ${APPNAME} --no-start --hostname ${HOSTNAME}-${SPRING_PROFILE}  -i 3 -b java_current -p ${APPNAME}-Api.jar',
+                     'se ${APPNAME} SPRING_PROFILES_ACTIVE "${SPRING_PROFILE}"',
+                     'se ${APPNAME} PEM_STR ${PEM_STR}',
+                     'se ${APPNAME} PEM_PASS ${PEM_PASS}',
+                     'se ${APPNAME} SPRING_PROFILES_ACTIVE ${SPRING_PROFILE}',
+                     'se ${APPNAME} SPRING_CONFIG_USER "${CONFIG_USR}"',
+                     'se ${APPNAME} SPRING_CONFIG_PASS "${CONFIG_PSW}"',
+                     'se ${APPNAME} DATAHUB_USER "${DH_UNPW_USR}"',
+                     'se ${APPNAME} DATAHUB_PASS "${DH_UNPW_PSW}"',
+                     'se ${APPNAME} APPDYNAMICS_AGENT_APPLICATION_NAME "DataServices-${EAI_NUM}"',
+                     'se ${APPNAME} APPDYNAMICS_AGENT_TIER_NAME "CoreHCM-${SPRING_PROFILE}-${EAI_NUM}"',
+                     'create-service appdynamics fedex1 "${APPNAME}-appd"',
+                     'bind-service ${APPNAME} ${APPNAME}-appd',
+        
+                     'start ${APPNAME}']
+         office365ConnectorSend message: "Finished deployment to STAGE ", status:"Complete", webhookUrl:'https://outlook.office.com/webhook/eaba08c7-1ac2-41db-9a42-9f0fa4b902ff@b945c813-dce6-41f8-8457-5a12c2fe15bf/IncomingWebhook/794e964175524934a3130b303d1d4c6e/8afad924-eba7-4405-a52c-0516ad170eeb'
+       }
+    } 
+
+     stage('CM MTP Request'){  // stage-12 - CM MTP Request
+      when{ 
+          branch 'master'
+      }    
+      steps{
+	    /* Perform environment variable replacement through envsubst unix command and output to cm_request.txt file
+		
+		cm_request_template.txt contains below env variables.
+            BUILD_TAG - String of jenkins-${JOB_NAME}-${BUILD_NUMBER} and
+            BUILD_URL - The URL where the results of this build can be found */
+			
+        sh "envsubst < cm_request_template.txt > cm_request.txt"  
+        script{
+		  // File cm_request.txt is basically an email body	
+          EMAIL_BODY = sh(
+            script: 'cat cm_request.txt',
+            returnStdout: true
+          )
+        }
+		// Sending email to recipient group email address with body, subject 
+        mail(
+          body: "${EMAIL_BODY}",
+          subject: 'CM MTP Request',
+          to: 'Dataservices_API_Production_Build@corp.ds.fedex.com'
+        )
+		
+		/*Office 365 Connector Plugin is used to send actionable messages in Outlook, Office 365 Groups, and Microsoft Teams. office365ConnectorSend command allows sending running Jobs status notifications. Once the Office 365 Connector plugin is installed, webhooks for notifications are defined in JenkinsFile as below -
+
+		office365ConnectorSend message: "<Your message>", status:"<Build status>", webhookUrl:'<The connector webhook url>' */
+		
+		
+         office365ConnectorSend message: "Pending deployment is awaiting approval", status:"APPROVAL REQUIRED", webhookUrl:'https://outlook.office.com/webhook/f3e63470-29f0-4614-9730-5be59832a530@b945c813-dce6-41f8-8457-5a12c2fe15bf/IncomingWebhook/b4c4376272684f2c8f8bc0744af0d03b/8afad924-eba7-4405-a52c-0516ad170eeb'
+		 
+        script{
+          configFileProvider([configFile(fileId: 'csdsapi.json', variable: 'INPUT')]) { // Read config file from  Config File 
+                                                                                           Management
+			def cm = readJSON file: "${INPUT}"              // Read cm parameters from config file - 'csdsapi.json'
+            timeout (time:cm.timeVal, unit:cm.unitVal){     // Run an input command with a time limit
+              def results = input(                          //  Wait for interactive input from user.
+                message: cm.messageVal,                     // 'message' parameter gives a prompt which will be shown to a human
+                ok: cm.okVal,                               // If you approve build, press button with label - cm.okVal
+                submitter: cm.submitterVal                  // User IDs and/or external group names of person or people permitted 
+				                                               to respond to the input    
+              )
+            }
+          }
+        }
+      }        
+    }  
+    
+     stage('pcf deploy to production'){  // stage-13 - pcf deploy to production
+      when{ 
+        branch 'master'
+      }
+      environment{
+        CONFIG=credentials('ConfigServer_prod')
+        SPRING_PROFILE="prod"
+        PEM_STR=credentials('PEM_STR_PROD')
+        PEM_PASS=credentials('PEM_PASS_PROD')
+        DH_UNPW=credentials('DataHub_LP_Unpw')
+      }  
+      steps{
+      
+         office365ConnectorSend message: "Started deployment to PRODUCTION ", status:"Beginning", webhookUrl:'https://outlook.office.com/webhook/eaba08c7-1ac2-41db-9a42-9f0fa4b902ff@b945c813-dce6-41f8-8457-5a12c2fe15bf/IncomingWebhook/794e964175524934a3130b303d1d4c6e/8afad924-eba7-4405-a52c-0516ad170eeb'
+         
+         /*script {
+             try {
+                pcfDeploy pamId: "${PAMID}",
+                url: "${EDCBO1}",
+                space: 'production',
+                cfcmd: 'cups ${APPNAME}-SyslogDrain -l syslog://${CLOUD_LOG_HOST_PROD}:2514'
+             } 
+             catch (Exception e){
+                pcfDeploy pamId: "${PAMID}",
+                url: "${EDCBO1}",
+                space: 'production',
+                cfcmd: 'uups ${APPNAME}-SyslogDrain -l syslog://${CLOUD_LOG_HOST_PROD}:2514'
+             }
+         }*/
+         
+         pcfDeploy pamId: "${PAMID}",    // What is PAMID?
+         url: "${EDCBO1}",
+         space: 'production',
+         cfcmd: 'apps',
+         extCfCmd: [ 'push ${APPNAME} --no-start --hostname ${HOSTNAME} -b java_current -i 4 -p ${APPNAME}-Api.jar',
+             'se ${APPNAME} SPRING_PROFILES_ACTIVE "${SPRING_PROFILE}"',
+             'se ${APPNAME} PEM_STR ${PEM_STR}',
+             'se ${APPNAME} PEM_PASS ${PEM_PASS}',
+             'se ${APPNAME} SPRING_CONFIG_USER "${CONFIG_USR}"',
+             'se ${APPNAME} SPRING_CONFIG_PASS "${CONFIG_PSW}"',
+             'se ${APPNAME} DATAHUB_USER "${DH_UNPW_USR}"',
+             'se ${APPNAME} DATAHUB_PASS "${DH_UNPW_PSW}"',
+             'se ${APPNAME} APPDYNAMICS_AGENT_APPLICATION_NAME "DataServices-${EAI_NUM}"',
+             'se ${APPNAME} APPDYNAMICS_AGENT_TIER_NAME "CoreHCM-${SPRING_PROFILE}-${EAI_NUM}"',
+             'create-service appdynamics fedex1 "${APPNAME}-appd"', // How appdynamics works?
+             'bind-service ${APPNAME} ${APPNAME}-appd',
+          
+             'start ${APPNAME}']
+
+         office365ConnectorSend message: "Finished deployment to PRODUCTION ", status:"Complete", webhookUrl:'https://outlook.office.com/webhook/eaba08c7-1ac2-41db-9a42-9f0fa4b902ff@b945c813-dce6-41f8-8457-5a12c2fe15bf/IncomingWebhook/794e964175524934a3130b303d1d4c6e/8afad924-eba7-4405-a52c-0516ad170eeb'
+       }
+     }
+  }
+}
+
+def getReleaseTag(){ // Groovy script to get latest git tag 
+
+    def retVal = false;
+    try {
+        def buildGitTag = sh(returnStdout: true, script: 'git tag -l --points-at HEAD')
+        buildGitTag = (null == buildGitTag) ? "" : buildGitTag.trim()
+        retVal = (buildGitTag ==~ /RELEASE-v.*/)
+        if(retVal){
+              echo "Release tag found - ${buildGitTag}"
+        } 
+        return retVal
+     } catch (Exception e){
+               echo "caught exception getting tag information $e"
+           retVal = false;
+     }
+     return retVal;
+}

@@ -1,0 +1,295 @@
+Lambda Expressions -- 
+
+
+Functional programming 
+
+In an Object oriented programming, a function has to be associated with a class or an object. 
+Function can not exist on it's own. What if I want just a function without associating it with a class or an object? That is where Functional programming comes in picture.
+
+Functional programming allows to pass just an action (behavior) to a method without associating a class or an object with an action.
+In object oriented programming, we need to implement a class or an interface, define action (behavior) as a method of a class or interface and then pass an instance of that class/interface. Here we are passing a thing (class/interface) and not action itself.
+Functional programming allows us to pass just an action (behavior) without associating it with a class or an interface.
+Lambdas allow us to create a function (action) without associating it with a class or an interface. 
+
+----------------------------------------------------------------------------------
+
+Anonymous Inner class
+
+Let us say we have an interface MyLambda
+
+Interface MyLambda {
+	void foo(); 
+}
+
+
+1) Create an implementation of an interface MyLambda, use instance of class MyLambdaImplementation to call foo() method
+
+Class MyLambdaImplementation implements MyLambda{
+	public void foo(){
+		System.out.print("Hello World!");
+	}
+}
+
+MyLambda myLambdaInstance = new MyLambdaImplementation();
+myLambdaInstance.foo(); // class implementation executing foo() method
+
+
+2) Execution using an Anonymous Inner class
+
+MyLambda anonymousInnerClassInstance = new MyLambda() {
+	public void foo(){
+		System.out.print("Hello World!");
+	}
+};
+
+anonymousInnerClassInstance.foo(); //  executing foo() method using instance of an Anonymous Inner class
+
+3) Execution Using Lambdas
+
+MyLambda aBlockOfCode = () -> System.out.print("Hello World!"); // foo() method signature matches that of Lambda
+aBlockOfCode.foo(); 
+
+
+----------------------------------------------------------------------------------
+
+What is Lambda?
+
+1) Lambdas are constructs introduced in Java 8 which enable functional programming in Java
+2) With Lambdas we can write concise and more readable code
+3) With Lambdas we can write easier to use APIs and libraries
+4) Enables support for parallel processing - Take advantage of multi-core processors
+5) Lambdas allow us to create a function (action) without associating it with a class or an interface. 
+6) Lambda expression is a function in isolation. 
+7) Lambda expression can be treated as a value (pass-by-value).
+8) Lambda expression can be assigned to a variable (same as value).
+
+	aBlockOfCode = () -> System.out.print("Hello World!");
+	
+What is Data-type of variable 'aBlockOfCode'? This question is answered by concept of Functional Interfaces.
+We can pass above variable 'aBlockOfCode' to a method OR we can directly pass a Lambda expression (Inline Lambda).
+
+greet(aBlockOfCode); OR
+greet(() -> System.out.print("Hello World!")); // Inline Lambda
+
+9) Lambda as an interface type - Any interface with same method signature as that of Lambda can be taken as interface type for that Lambda.
+
+For e.g 
+
+MyLambda aBlockOfCode = () -> System.out.print("Hello World!");
+
+// Functional Interface
+Interface MyLambda {
+	void foo(); // Since method signature matches that of Lambda
+}
+
+Java language designers chose an interface to be type of a Lambda and did not introduce new type because they want to retain backward compatibility with existing interfaces like Runnable.
+We can pass a Lambda expression when creating a new thread as below. Runnable matches criteria (single abstract method - public void run()) for a functional interface.
+
+a) Create a Runnable and pass it to a Thread:
+
+Runnable runnable = () -> { 
+    // your code here ...
+};
+
+Thread t = new Thread(runnable);
+t.start();  
+
+b) Java 8 Thread lambda syntax (without a Runnable)
+
+Thread t = new Thread(() -> {
+    // your code here ...
+});
+
+t.start(); // You can not directly call run method to create a new thread, you need to call start method to create a new thread. If you call run method directly, it won’t create a new thread and it will be in same stack as main.
+
+c) Lambda approach to create a Thread, without creating a reference (variable) to the thread:
+
+new Thread(() -> // your code here).start();
+
+
+
+10) How do you execute Lambda expressions? 
+Execute Lambda expressions by calling the interface method on it, just as if it were an instance of a class.
+
+For e.g.
+
+// Functional Interface
+Interface MyLambda {
+	void foo(); // Since method signature matches that of Lambda
+}
+
+MyLambda aBlockOfCode = () -> System.out.print("Hello World!");
+aBlockOfCode.foo(); // Lambda Execution
+
+
+Class MyLambdaImplementation implements MyLambda{
+	public void foo(){
+		System.out.print("Hello World!");
+	}
+}
+
+MyLambda myLambdaInstance = new MyLambdaImplementation();
+myLambdaInstance.foo(); // class implementation executing foo() method
+
+Lambda expression is not just a replacement for an Anonymous Inner class but it is completely different concept.
+
+11) Exception handling in Lambdas
+
+A good way to handle exceptions for a Lambda is to do it in a wrapper Lambda. Wrapper Lambda is kind of No-op where it accepts original Lambda and returns same Lambda. Additional code inside a wrapper Lambda will be to just a  try-catch block for exception handling.
+
+
+public static void main(String[] args){
+	int[] someNumbers = {1,2,3,4};
+	int key = 0;
+	
+	process(someNumbers, key, wrapperLambda((v,k -> System.out.println(v / k))));
+}
+
+
+
+private static void process(int[] someNumbers, int key, BiConsumer<Integer,Integer> consumer){
+	for(int i: someNumbers){
+		consumer.accept(i,key);
+	}
+}
+
+
+// Below is a wrapper function just to handle exception with try-catch
+
+private static BiConsumer<Integer,Integer> wrapperLambda(BiConsumer<Integer,Integer> consumer) {
+	return (v,k) -> {
+		try {
+			consumer.accept(v,k); // This is basically a no-op. Just replacing consumer.accept(v,k) with System.out.println(v / k) and returning same BiConsumer<Integer,Integer> type Lambda
+		}catch (ArithmeticException e) {
+			System.out.print("Exception caught in wrapper Lambda!");
+		}
+	}
+
+}
+
+
+
+
+
+----------------------------------------------------------------------------------
+
+Using Lambdas -- 
+
+Lambda Examples
+
+aBlockOfCode = () -> {
+	System.out.print("Hello World!");
+} 
+
+OR
+
+aBlockOfCode = () -> System.out.print("Hello World!"); // We can remove curly braces since only one statement in Lambda
+
+doubleNumberFunction = (int a) -> return a * 2; 
+OR
+doubleNumberFunction = (int a) -> a * 2; // We can remove return
+
+
+addFunction = (int a, int b) -> a + b;
+
+// curly braces required since multiple statements
+safeDivision = (int a, int b) -> {
+	if(b == 0) return 0;
+	return a / b;
+}
+
+length = (String s) -> s.length();
+
+----------------------------------------------------------------------------------
+
+Functional Interfaces
+
+1) A functional interface should have only one abstract method. It can have more than one default or static methods (As of Java 8) but only one abstract method. 
+
+MyLambda aBlockOfCode = () -> System.out.print("Hello World!");
+
+// Functional Interface
+Interface MyLambda {
+	// Here Method name do not matter, but signature matters
+	void foo(); // Since method signature matches that of Lambda
+}
+
+2) Type inference in Lambdas - We don't have to explicitly mention argument type and return type in Lambda, compiler infers it from method signature in a functional interface.
+
+For e.g.
+ 
+interface StringLengthLambda{
+	int getLength(String str);
+}
+
+StringLengthLambda instance = (String s) -> s.length();
+OR 
+StringLengthLambda instance = s -> s.length(); // Type inference in action!
+
+3) Inline Lambdas Example
+
+interface StringLengthLambda{
+	int getLength(String str);
+}
+
+public void printLambda(StringLengthLambda lambda){
+	System.out.print(lambda.getLength("Hello World!"));
+}
+
+printLambda(s -> s.length()); // Inline Lambda Execution
+
+4) @FunctionalInterface enforces an interface to be a functional interface. It do not allow second abstract method to be added in a functional interface.
+
+5) @FunctionalInterface is an optional annotation. But it is good practice to add it. 
+
+6) Functional interfaces provide target types for Lambda expressions and method references.
+
+7) Functional interfaces are part of java.util.function package. With these pre-defined interfaces, we do not have to write custom interfaces for target types of Lambda expressions and method references.
+
+8) java.util.function package has some out of the box functional interfaces like Consumer, Supplier, Predicate, Function etc. which can be used in common scenarios.  
+
+----------------------------------------------------------------------------------
+
+Method references
+
+1) Method reference is an alternative way to write a Lambda Expression.
+
+
+public class MethodReference2 { 
+ 
+    public static void ThreadStatus(){  
+        System.out.println("Thread is running...");  
+    }  
+	
+    public static void main(String[] args) {  
+        Thread t2=new Thread(MethodReference2::ThreadStatus);  // MethodReference2::ThreadStatus === () -> ThreadStatus()
+        t2.start();       
+    }  
+}  
+
+
+Below Lambda expression can be replaced with a Method reference
+
+p -> System.out.print(p) === System.out::print
+
+In short, constructs like below can be replaced with Method References
+
+() -> ThreadStatus()
+p -> method(p)
+
+
+----------------------------------------------------------------------------------
+
+foreach method
+
+1) With for and for-each loop in Java, you are telling compiler what to iterate, what is action on each element and how to iterate at run-time.
+2) With new Java 8 approach, you only tell runtime what to iterate, what is action on each element and not how to iterate. 
+3) With for and for-each loop in Java, iteration over Collection is sequential. However, with foreach method, parallel processing is possible with multi-core processor.
+
+For e.g.
+
+people.forEach(action) // action can be a Lambda Expression or a Method Reference
+
+I want to execute this action (Lambda/Method Reference) for each element of Collection people. How to iterate is upto the runtime.
+
+

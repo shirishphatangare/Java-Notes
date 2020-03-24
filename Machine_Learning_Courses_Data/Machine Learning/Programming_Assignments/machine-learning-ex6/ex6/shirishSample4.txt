@@ -1,0 +1,18 @@
+       
+Dear Investor,
+ 
+With reference to SEBI circular ref. no. SEBI/HO/MIRSD/MIRSD2/CIR/P/2016/95 dated September 26, 2016, stock brokers are required to upload details of clients fund balance and securities balance. 
+ 
+Your Stock Broker SHAREKHAN LTD. has reported the details of Funds balance and Securities balance, securities pledged, last settlement date and ISIN wise details of securities as on 30/11/2018 for UCC – W463266 to BSE which is attached.
+
+Please follow the procedure given below for opening the attachment:
+         1. Click on the attachment provided with this email.
+         2. You will be prompted for your password.
+         3. The password is your PAN Number in upper case
+ 
+*Note:-
+
+Securities balance mentioned in the attached document are securities held in demat accounts of the Trading Member, tagged as client account/ collateral account etc., on your behalf. It will not reflect holdings in your own Demat a/c.
+Negative number in the column “Funds balance (BSE)” and/or “Net across Exchanges” in the attached document represents Debit balance/balance payable by you to the Stock Broker.
+ 
+In case you find any discrepancy, we advise you to take up the matter immediately with your member. You may contact your stock broker at MYACCOUNT@SHAREKHAN.COM or 1800227500.                             

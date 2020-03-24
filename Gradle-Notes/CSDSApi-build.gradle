@@ -1,0 +1,477 @@
+//import for LocalDate and LocalDateTime classes used for swagger generation
+import java.time.*
+import org.apache.tools.ant.filters.ReplaceTokens
+
+// If your build script needs to use external libraries, you can add them to the script’s classpath in the build script itself.
+
+buildscript {
+
+	// an ext block adds an extra property to the buildscript block
+	
+    ext {
+        springBootVersion = '2.1.6.RELEASE'
+    }
+	
+	// repositories for buildscript block
+    
+	repositories {
+        maven { url 'https://nexus.prod.cloud.fedex.com:8443/nexus/repository/central/' }
+        maven { url "https://nexus.prod.cloud.fedex.com:8443/nexus/repository/Gradle/" }
+    }
+	
+	// Having declared the build script classpath, you can use the classes in your build script as you would any other classes on the classpath. 
+	// This is the same way you declare, for example, the Java compilation classpath. 
+	
+	// dependencies for buildscript block
+	
+    dependencies {
+		// Use String notation with expression support for variable springBootVersion. 
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath 'javax.servlet:servlet-api:2.5'
+        classpath group: 'org.yaml', name: 'snakeyaml', version: '1.19'
+        //classpath 'org.hibernate:hibernate-gradle-plugin:5.4.3.Final'
+    }
+}
+
+
+// The plugins DSL block provides a succinct and convenient way to declare plugin dependencies to provide easy access to both core and community  
+// plugins. To apply a community plugin from the portal, the fully qualified plugin id must be used as below.
+
+plugins {
+  id "com.benjaminsproule.swagger" version "1.0.6"
+}
+
+apply plugin: 'java'
+
+// publishing feature to publish artifacts to nexus repo
+apply plugin: 'maven-publish'
+
+
+// The Spring Boot Gradle Plugin provides Spring Boot support in Gradle. It allows you to package executable jar or war archives, run Spring Boot 
+// applications, and use the dependency management provided by spring-boot-dependencies. 
+
+apply plugin: 'org.springframework.boot'
+
+// When you apply the io.spring.dependency-management plugin, Spring Boot’s plugin will automatically import the spring-boot-dependencies bom from the // version of Spring Boot that you are using. This provides a similar dependency management experience to the one that’s enjoyed by Maven users. For // example, it allows you to omit version numbers when declaring dependencies that are managed in the bom. To make use of this functionality, simply // declare dependencies in the usual way but omit the version number
+
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'jacoco'
+apply plugin: 'project-report'
+
+// Plugin to create Swagger documentation using Gradle
+apply plugin: 'com.benjaminsproule.swagger'
+
+//apply plugin: 'org.hibernate.orm'
+
+// an ext block adds two extra properties to the project object
+
+ext {
+    swaggerFile='corehcm-api'
+    gitTagVersion = null
+}
+
+// assign values to default project properties
+
+group = 'com.fedex.csds'
+
+// Calling getVersion() method to get the most recent tag
+version = getVersion()
+
+// The Java plugin adds the java extension to the project. This allows to configure a number of Java related properties inside a dedicated DSL block.
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+sourceSets {
+  main {
+    java {
+      srcDir 'src/gen/java' // Why srcDir for main set to src/gen/java? How build works for src/main/java?
+    }
+  }
+}
+
+// Add source set to define where the generated source code should go to
+
+sourceSets.configureEach { sourceSet ->
+    tasks.named(sourceSet.compileJavaTaskName).configure {
+        options.annotationProcessorGeneratedSourcesDirectory = file("src/gen/java")
+    }
+}
+
+//delete the generated metadata information from the model
+
+clean {
+  delete += fileTree("src/gen/java").include('**/*')
+}
+
+repositories {
+    maven { url 'https://nexus.prod.cloud.fedex.com:8443/nexus/repository/central/' }
+    maven { url 'https://nexus.prod.cloud.fedex.com:8443/nexus/repository/redux' }
+    maven { url 'https://nexus.prod.cloud.fedex.com:8443/nexus/repository/oracle' }
+    maven { url 'https://nexus.prod.cloud.fedex.com:8443/nexus/repository/3530979-CS-DataServices' }
+}
+
+
+dependencies {
+	// implementation - Implementation only dependencies for source set 'main'. Compile is deprecated, use 'Implementation' instead
+	
+    implementation 'org.apache.httpcomponents:httpclient:4.5.9'
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.cloud:spring-cloud-starter-config:2.1.0.RELEASE'
+    implementation 'org.springframework.cloud:spring-cloud-commons:2.1.0.RELEASE'
+    implementation 'org.springframework.vault:spring-vault-core:2.1.1.RELEASE'
+    implementation 'org.springframework.ws:spring-ws-core'
+    //implementation 'org.springframework.security:spring-security-config'
+    implementation 'org.springframework.hateoas:spring-hateoas' 
+    implementation 'org.springframework:spring-context-support'
+    implementation 'com.oracle.jdbc:ojdbc8:18.3.0.0'
+	
+	// To download only the artifact of an external dependency and not the transitive dependencies, 
+	// we can set the transitive property for the dependency to false
+	
+    implementation('com.fedex.framework:security-server-authentication:1.0.11.RELEASE'){ transitive = false }
+    implementation 'com.h2database:h2'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
+    implementation 'net.logstash.logback:logstash-logback-encoder:5.2'
+
+    //implementation('org.hibernate:hibernate-jcache')
+    //implementation('com.fedex.framework:security-server-authorization:1.0.3.RELEASE'){ transitive = false }
+    //implementation 'com.github.ben-manes.caffeine:jcache'
+    
+    testImplementation('com.fedex.framework:security-client:1.1.0.RELEASE'){ transitive = false } //1.1.0.RELEASE)
+    testImplementation('org.springframework.boot:spring-boot-starter-test'){
+       exclude group: 'junit', module: 'junit' //by both name and group
+    }
+    testImplementation 'org.springframework.security:spring-security-test'
+    
+	// testImplementation - Implementation only dependencies for source set 'test'. testCompile is deprecated, use 'testImplementation' instead
+	
+    testImplementation 'org.junit.jupiter:junit-jupiter:5+'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5+'
+    testImplementation 'org.junit.vintage:junit-vintage-engine:5.5.2'
+    testImplementation 'org.junit.platform:junit-platform-engine:1.5.1'
+    testImplementation 'org.junit.platform:junit-platform-commons:1.5.1'
+    testImplementation 'org.mockito:mockito-core:2.+'
+    testImplementation 'org.mockito:mockito-junit-jupiter:2.18.3'
+    
+    annotationProcessor 'org.hibernate:hibernate-jpamodelgen:5.4.1.Final'
+}
+
+swagger {
+    apiSource {
+        attachSwaggerArtifact = false
+        springmvc = true
+        //locations = [ 'com.fedex.csds.core.api', 'com.fedex.csds.core.web' ]
+        locations = ['com.fedex.csds']
+        schemes = ['https']
+        basePath = '/v1/core'
+        descriptionFile = new File("$projectDir/README.md")
+        info {
+            title = 'DataHub Core Rest API'
+            version = "${getTagVersion()}"
+            // use markdown here because I'm using markdown for output,
+            // if you need to use html or other markup language, you need to use your target language
+            description = 'Multi use API for majority of clients needing access to DataHub and Workday data'
+            termsOfService = "Don't be evil"
+            contact {
+                email = 'Dataservices_API_dev@corp.ds.fedex.com'
+                name = 'Corporate Systems Data Services'
+                url = 'https://pub.purplehub.fedex.com/sites/CSDS/CS%20Data%20Services%20Documentation/Forms/AllItems.aspx'
+            }
+            license {
+                name = 'Authorized internal FedEx users only'
+            }
+        }
+        securityDefinition {
+            // `name` can be used refer to this security schemes from elsewhere
+            name = 'devfw'
+            type = 'apiKey'
+            // The location of the API key. Valid values are "query" or "header".
+            keyLocation = 'header'
+            // The name of the header
+            keyName = 'X-CSR-SECURITY_TOKEN'
+            description = "DevFramework generated token from EAI certificates. Please see keyword: devframework"
+        }
+        //list of Maps with String:List where string is the 
+        //security definition name...can have multiple
+        security = [ ['devfw':[] ] ]
+        swaggerDirectory = "${project.buildDir}/resources/main/static/swagger/"
+        swaggerFileName = "${swaggerFile}"
+        
+        //excludePattern
+    }
+}
+
+/*
+hibernate {
+    enhance {
+        enableLazyInitialization= true
+        enableDirtyTracking = false
+        enableAssociationManagement = true
+    }
+}
+*/
+
+
+// Spring Boot DSL
+
+springBoot {
+
+// Spring Boot Actuator’s info endpoint automatically publishes information about your build in the presence of a META-INF/build-info.properties file. // A BuildInfo task is provided to generate this file. 
+
+    buildInfo {
+        properties {
+            time = null
+            artifact = "CoreHCM Api"
+            version = getTagVersion()
+            group = "DataServices"
+            name = 'CoreHCM'
+            additional = [
+                'description': 'Generic API to return DataHub Data',
+            ]
+        }
+        doLast {
+            File f = new File(destinationDir, 'build-info.properties')
+            f.text = f.filterLine { !it.startsWith('#') }
+        }
+    }
+}
+
+// Various configuration options for test task in test block
+// test task is provided by Java Plugin
+
+test {
+
+    //stop testing on first failure...
+    failFast = true
+    
+	// enable JUnit Platform (a.k.a. JUnit 5) support
+	// Run test task only for unit testing. skip below tags smoke, integration and system to skip smoke, integration and system test cases
+	
+    useJUnitPlatform()
+    {
+        //includeTags 'fast'
+        excludeTags 'smoke'
+        excludeTags 'integration'
+        excludeTags 'system'
+    }
+	
+	// Configures the reports that this task potentially produces
+    
+    reports {
+      junitXml.enabled = true
+      html.enabled = true
+    }  
+      
+      // listen to events in the test execution lifecycle
+      beforeTest { descriptor ->
+         logger.lifecycle("Running test: " + descriptor)
+      }
+    
+	// show standard out and standard error of the test JVM(s) on the console	
+	
+    testLogging {
+      showStandardStreams = true
+      exceptionFormat = 'full'
+    }
+    
+	// The environment variables to use for the test task 	
+	// findProperty reads properties from gradle.properties
+	
+    environment "PEM_STR", findProperty('pem_str')
+    environment "PEM_PASS", findProperty('pem_pass')
+    environment "DATAHUB_URL", findProperty('datahub_url')  
+    
+}
+
+// getSecurityGroupsFromYaml task is not used anywhere !!
+
+task getSecurityGroupsFromYaml() { 
+	
+	// pre-defined task properties - description, group etc.
+	
+    description "list groups already defined for users in sec.groups"
+    group "documentation"
+    
+    logger.debug "path: ${project.sourceSets.main.resources}"
+
+    def cfgFile = sourceSets.main.resources.matching { include 'corehcm-sec.yml' }.singleFile
+    def cfg = new org.yaml.snakeyaml.Yaml().load( cfgFile.newInputStream() )
+
+    doLast {
+        logger.debug "The version is $version"
+        def defGroups = [] as HashSet
+        def groups = cfg.sec.groups
+        //cycle through each user...get the groups they belong to...add to set
+        groups.each { g, v -> 
+            logger.debug "User -> $g"
+            v.each {
+                if(it != null) { 
+                    logger.debug "group: $it"
+                    defGroups << it 
+                }
+            }
+        }
+        logger.debug "Count: ${defGroups.size()}"
+        defGroups.sort().each {
+            logger.error it
+        }
+    }
+}
+
+//task to run only the smoke tests...should include http calls
+//this means we need the cert in jenkins
+
+task smokeTests(type: Test) {
+    useJUnitPlatform {
+        includeTags 'smoke'
+    }
+	
+// check task - Aggregate task that performs verification tasks, such as running the tests. Some plugins add their own verification tasks to     // check. You should also attach any custom Test tasks to this lifecycle task if you want them to execute for a full build.
+	
+    //dependsOn check
+	
+	// The environment variables to use for the smokeTests task 
+	environment "EXTERNAL_AUTH_USR", findProperty('external_auth_usr')
+    environment "EXTERNAL_AUTH_PSW", findProperty('external_auth_psw')
+    environment "TEST_URIS", findProperty('test_uris')
+    environment "PEM_STR", findProperty('pem_str')
+    environment "PEM_PASS", findProperty('pem_pass')
+
+}
+
+//task to run only the integration tests...should include http calls
+//this means we need the cert in jenkins -- What is meaning of having cert in Jenkins and why?
+
+task integrationTests(type: Test) {
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+    //dependsOn check
+	
+	// The environment variables to use for the integrationTests task 
+	environment "EXTERNAL_AUTH_USR", findProperty('external_auth_usr')
+    environment "EXTERNAL_AUTH_PSW", findProperty('external_auth_psw')
+    environment "DATAHUB_URL", findProperty('DATAHUB_URL')
+    environment "TEST_URIS", findProperty('test_uris')
+
+}
+
+
+// There are different task types like Test, Copy, Jar etc.
+
+task genDocs(type: Copy) {
+
+	// We must assign a value to the group property of a task to group tasks together 
+    group 'swagger'
+    
+    //outputs.file "${project.buildDir}/corehcm-api.json"
+    description "generates swagger documentation then copies to stat resource to serve"
+    into "${project.buildDir}/resources/main/static/swagger/"
+    from "${project.projectDir}/documentation/swagger/"
+}
+
+generateSwaggerDocumentation.dependsOn 'genDocs'
+bootJar.dependsOn 'generateSwaggerDocumentation'
+
+
+// If the Java plugin is also applied to your project along with jacoco plugin, a new task named jacocoTestReport is created
+jacocoTestReport {
+    reports {
+        xml.enabled false
+        csv.enabled false
+    }
+	
+	// Exclude below directories from test coverage report
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(it) {
+                exclude "com/fedex/csds/core/api/**"
+                exclude "com/fedex/csds/core/dao/model/**"
+            }
+        }))
+    }
+}
+// def keyword is used when you define a variable in a build script and it is always local. But methods declared with def keyword are not part of that // scope. 
+
+def getTagVersion() {
+	// Once the property has been added with ext block, it can be read and set like predefined properties
+	
+    if(gitTagVersion){ // gitTagVersion property in initialized to null and if it is not null, return it
+        return gitTagVersion
+    }
+	// Keyword def comes from Groovy and means that variable has local scope.
+    def outBuffer = new ByteArrayOutputStream()
+	
+	// exec - Executes a command line process. 
+	
+    exec {
+		// "git describe" command finds the most recent tag that is reachable from a commit. By default (without --all or --tags) git describe only 
+		// shows annotated tags. 
+        // An annotated tag creates an additional tag object in the Git repository, which allows you to store information associated with the tag 
+		// itself. This may include release notes, the meta-information about the release, and optionally a signature to verify the authenticity of  // commit to which it points
+	
+        commandLine "git", "describe"//, "--tags"   //using --tags will give annotated and light tags. We want annotated
+		//store the output instead of printing to the console
+        standardOutput = outBuffer
+    }
+	// read the output from outBuffer and return it
+    gitTagVersion = outBuffer.toString().trim()
+    return gitTagVersion
+}
+
+
+// getVersion() Method to get most recent tag
+def getVersion() {
+    logger.info "getting Version..."
+    String tagVersion = getTagVersion()
+    String retVal = ""
+	
+	// Extract version from tag
+    tagVersion.findAll(/RELEASE-v(\d+\.\d+\.\d+)(.*)/) { full, version, candidate ->
+        logger.info "tag version : $version"
+        logger.info "candidate version: $candidate"
+        retVal = "$version"
+    }
+    logger.info "returning version: $retVal"
+    return retVal;
+}
+
+
+// getVersion() task which is called from JenkinsFiles to get most recent tag
+task getVersion() {
+    group "build info"
+    description "Gets the git tag version and strips off the '-RC' or intermediary tag at the end of release tags"
+    doLast{
+        println version
+    }
+}
+
+// The Maven Publish Plugin provides the ability to publish build artifacts to an Apache Maven repository. 
+
+publishing {
+
+	// defining a publishing repository
+    repositories {
+        maven { url 'https://nexus.prod.cloud.fedex.com:8443/nexus/repository/3530979-CS-DataServices' 
+            credentials {
+                username nexusUser
+                password nexusPassword
+            }
+        }
+    }
+	// This defines a publication called "deployment" that can be published to a Maven repository by virtue of its type: MavenPublication
+	// This publication consists of just the production JAR artifact and its metadata, which combined are represented by the java component of the project.
+    publications {
+        deployment(MavenPublication) {
+            from components.java 
+            version version
+        }
+    }
+}
+

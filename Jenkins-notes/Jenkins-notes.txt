@@ -1,0 +1,224 @@
+Introduction to Jenkins
+
+1) Jenkins is an open source automation server with good community support.
+2) Jenkins is written in Java and hence portable to all major platforms.
+3) It's purpose is to facilitate Continuous Integration (CI) and Continuous Deployment (CD)
+4) Build, test and deploy projects continuously.
+5) Accelerates sw development
+6) Jenkins achieves CI using Plugins. CI becomes essential in complex projects where multiple teams are working, for early detection of problems.
+7) We can setup Jenkins to watch for code changes in repositories like SVN or Github via Webhooks and trigger builds automatically.
+8) Jenkins supports container technologies like Docker and Kubernetes.
+
+----------------------------------------------------------------------------------------------
+
+Installing Jenkins - Demo
+
+1) Download jenkins.war from - http://mirrors.jenkins.io/war-stable/latest/jenkins.war
+2) java -jar jenkins.war --httpPort=8080
+3) .jenkins directory is created -  $user.home/.jenkins and war file is extracted there
+4) An admin user has been created and a password is generated.
+5) Password for default admin account is stored at - C:\Users\Shirish\.jenkins\secrets\initialAdminPassword
+
+----------------------------------------------------------------------------------------------
+
+Plugin management in Jenkins
+
+1) Jenkins as a tool is nothing but a collection of Plugins
+2) During installation of Jenkins, we can install only handful of default Plugins or customize selection. - PPT
+3) Plugins in the Jenkins environment are used to improve the functionality and meet user requirements
+4) Principles of Plugin Usage --
+	a) Read through Plugins documentation and guide before installing it
+	b) Check usage statistics and update frequency
+	c) Check for backward compatibility
+	d) Understand Plugin workflow
+5) Types of Plugins - PPT
+	a) Administration - Audit Trail, Github Authentication, Pipeline, Docker
+	b) UI - Blue Ocean, Calendar View, dbCharts, JQuery UI
+	c) SCM - Github Branch Source, BitBucket Branch Source, Git, Clearcase, Pipeline - Multibranch
+	d) Build Management - Dr Memory, Go, CodeCover, DeployHub, TestLink
+6) Manage Jenkins --> Manage Plugin option opens up Plugin Manager page
+7) Plugins are installed in $user.home/.jenkins/plugins directory
+8) Plugin Documentation - https://plugins.jenkins.io/
+
+----------------------------------------------------------------------------------------------
+
+Architecture of Jenkins
+
+1) Jenkins has a distributed Architecture i.e. single Master node and different slave nodes
+2) Why distributed Architecture for Jenkins?
+	a) When different envs are needed - dev,rel,stg,prd etc.
+	b) For a larger project, a single server can not handle entire load.
+3) Master and slave nodes' responsibilities - PPT
+3) Master node communicates with Slaves using TCP/IP protocol.
+4) "Build Executor Status" in Jenkins UI show master and slave nodes and currently running jobs.
+
+----------------------------------------------------------------------------------------------
+
+Jenkins Pipeline
+
+1) Jenkins Pipeline is a suite of plugins that supports continuous delivery pipeline.
+2) A continuous delivery pipeline is an automated expression of process taking your project from version control to release.
+3) Building a sw in a reliable and repeatable manner.
+4) Foundation of "Pipeline as a code" is a JenkinsFile which is checked in with source code.
+5) JenkinsFile is a single source of truth for different teams in a project which can be reviewed as a part of code itself.
+6) There are two types of syntaxes used for defining your JenkinsFile  - Declarative or Scripted.
+7) Declarative is more preferred form which provides rich syntactical features. 
+8) Scripted Pipeline follows the Groovy syntax.
+9) Declarative Pipeline Syntax - PPT
+10) Scripted Pipeline Syntax - PPT
+
+----------------------------------------------------------------------------------------------
+
+Creating a Simple Pipeline
+
+1) A Pipeline can be created in any of the following ways --
+	a) Blue Ocean
+	b) Through Classic Jenkins UI
+	c) JenkinsFile - In SCM
+2) Pipeline Syntax helps to create a pipeline using Jenkins UI.
+3) Demo below steps to create first Jenkins Pipeline. Without any actual software, just printing "Hello World".
+
+
+pipeline {
+    agent { label 'master' }
+    stages {
+        stage('build') {
+            steps {
+                echo "Hello World!"
+            }
+        }
+    }
+}
+
+
+4) Pipeline is designed to easily use Docker images as the execution environment for a single Stage or the entire Pipeline. This way we can customize the execution environment. Meaning that a user can define the tools required for their Pipeline, without having to manually configure agents. Practically any tool which can be packaged in a Docker container. can be used with ease by making only minor edits to a Jenkinsfile.
+
+pipeline {
+    agent {
+        docker { image 'node:7-alpine' }
+    }
+	........
+	
+pipeline {
+    agent none
+    stages {
+        stage('Back-end') {
+            agent {
+                docker { image 'maven:3-alpine' }
+            }
+            steps {
+                sh 'mvn --version'
+            }
+        }
+        stage('Front-end') {
+            agent {
+                docker { image 'node:7-alpine' }
+            }
+            steps {
+                sh 'node --version'
+            }
+        }
+    }
+}
+
+
+----------------------------------------------------------------------------------------------
+
+Building a Pipeline with Jenkinsfile
+
+1) Complex pipelines are difficult to write and maintain
+2) You can write JenkinsFile in an Eclipse IDE and commit to source control.
+3) When using Jenkinsfile from SCM "git clone" step for 'Build' stage is not necessary. It automatically clones 
+   repository which it is part of.
+4) Extend Pipeline with shared libraries
+5) Sections - agent, post, stages, steps
+6) Directives - environment, options, parameters, triggers, Jenkins cron syntax, stage, tools, input, when
+
+   
+Jenkinsfile Demo - https://github.com/shirishphatangare/springExample.git
+
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+				bat 'mvn clean'
+            }
+        }
+		stage('Test') {
+            steps {
+				bat 'mvn test'
+            }
+        }
+		stage('Deploy') {
+            steps {
+				bat 'mvn package'
+            }
+        }
+    }
+}
+
+----------------------------------------------------------------------------------------------
+
+Jenkins Multibranch Pipeline - Demo
+
+1) More dynamic and automated process
+2) Creates a set of Pipeline projects according to detected branches in one SCM repository.
+2) Implement different Jenkinsfile for different branches
+3) Creating a Multibranch Pipeline enables you to build both master and feature branches simultaneously and compare the results.
+4) Allows you to build multiple branches simultaneously and compare results.
+5) Allows you to have different Jenkinsfiles for different branches.
+6) Allows you to customize the execution environment for different branches. For e.g feature branch can use docker image.
+7) Auto-detects all the available branches or a newly created branch for the project.
+8) Instead of "Build Now" and "Console Log", we have "Scan Multibranch Pipeline Now" and "Scan Multibranch Pipeline log" links   respectively. 
+
+
+
+git checkout -b offshore
+git push origin offshore
+
+----------------------------------------------------------------------------------------------
+
+CSDSApi Multibranch Pipeline  - Explain Jenkinsfile at high level and show in Jenkins UI
+Exercise - To understand CSDSApi Jenkinsfile in depth, refer to Jenkins documentation and understand what each command does.
+
+Explain Cloud config server level specific properties files 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

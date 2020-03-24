@@ -1,0 +1,1013 @@
+A) Section 1 - Introduction 
+
+a) Gradle is a free and open source project and it is licensed under the Apache License.
+
+b) Gradle is an advanced general purpose build management system based on Groovy and Kotlin. 
+
+c) Gradle requires JDK 6 or higher. Although Gradle uses Groovy, we don't have to install Groovy ourselves. Gradle bundles the Groovy libraries with the distribution.
+
+d) The Gradle core itself is written in Java and Groovy.
+
+e) Gradle supports the automatic download and configuration of dependencies or other libraries. 
+
+f) Gradle is a project automation tool that has a wide range of applications. The basic aim of Gradle is to automate a wide variety of tasks performed by software developers, including compiling computer source code to binary code, packaging binary codes, running tests, deploying applications to production systems, and creating documentation.
+
+g) Gradle uses the concept of projects to define a related set of tasks. A Gradle build can have one or more projects. A project has one or more tasks. Tasks are a unit of work that need to be executed by the build. Examples of tasks are compiling source code, packaging class files into a JAR file, running tests, and deploying the application.
+
+
+h) DSL based on Groovy - Gradle uses a Domain Specific Language (DSL) based on Groovy to declare builds. The DSL provides a flexible language that can be extended by us. As the DSL is based on Groovy, we can write Groovy code to describe a build and use the power and expressiveness of the Groovy language. 
+
+i) Gradle plug-ins - The Gradle build system uses plug-ins to extend its core functionality. A plug-in is an extension to Gradle which typically adds some preconfigured tasks. Gradle ships with a number of plug-ins, and you can develop custom plug-ins. Gradle provides also a registry for plug-ins
+https://plugins.gradle.org/
+
+j) Support for Ant Tasks and Maven repositories - Gradle supports Ant Tasks and projects. It supports Maven and Ivy repositories for retrieving these dependencies. This allows reusing the artifacts of existing build systems.
+
+k)  Gradle Wrapper - The Gradle Wrapper allows us to execute Gradle builds even if Gradle is not installed on a computer. This is a great way to distribute source code and provide the build system with it so that the source code can be built.
+
+l) Incremental builds - With Gradle, we have incremental builds.  If the sources have changed, the task is executed; but if the sources haven't changed, the execution of the task is skipped and the task is marked as being up to date.
+
+m) Multi-project builds - Gradle supports multi-project and multi-artifact builds. A project can simply be dependent on other projects or be a dependency of other projects. We can define a graph of dependencies among projects, and Gradle can resolve these dependencies for us. We have the flexibility to define our project layout as we want.
+
+------------------------------------------------------------------------------------
+
+Section A-1) Writing our first build script
+
+a) A project using Gradle describes its build via a "build.gradle" file. 
+
+b) You can use single and multiline comments in Gradle build files.
+
+// Single line comment
+
+/*
+ Multi
+ line
+ comment
+*/
+
+
+c) By default, Gradle uses the project directory name as project name. You can change this by creating a settings.gradle file in the directory which specifies the project name.
+
+rootProject.name = 'sample_Java'
+
+d) Use the "gradle project" command to get information about your project.
+
+e) Sample build.gradle file
+
+// Project description - Assign value to description property.
+project.description = 'Simple Java project'
+
+// DSL to create a new task using doLast
+task helloWorld { 
+doLast {
+		println 'Hello world.' 
+		println 'Running simple task for project ' +
+        project.description
+	}
+} 
+
+
+gradle <task>  --> To run a build
+
+Output 1 - 
+
+$ gradle helloWorld
+
+
+Output 2 - 
+
+$ gradle --quiet helloWorld OR 
+$ gradle --q helloWorld
+
+
+f) You may see DSL creating a new task using Groovy << operator. This option is removed in Gradle v5.0.
+
+------------------------------------------------------------------------------------
+
+Section A-2) Command-line options
+
+The gradle command is used to execute a build. This command accepts several command-line options. 
+
+a) Default Gradle Tasks
+
+ gradle -q tasks --> To list all tasks runnable from root Gradle project
+
+sample output 
+
+$ gradle -q tasks
+
+b) gradle tasks --all --> To see all tasks and more detail 
+c) gradle help --task <task> --> To see more detail about a task 
+d) Task name abbreviation feature of Gradle
+
+Can we use gradle h to run helloWorld task ?
+gradle h will conflict with default help task. So, to uniquely identify our helloWorld task, we use the hello or hW as shown below -
+
+$ gradle -q hello
+$ gradle -q hW  // abbreviate each word in a CamelCase task name
+
+e) If we use the gradle --help (or -h or -?) option, we see the complete list of options.
+
+f) Logging options --debug (or -d), --info (or -i), --stacktrace (or -s), and --full-stacktrace (or -S) options control how much output we see when we execute tasks. 
+
+--info (or -i) output is not as verbose as with --debug, but it can provide a better understanding of the build steps.
+
+If our build throws exceptions, we can see the stack trace information with the --stacktrace (or -s) and --full-stacktrace (or -S) options. The latter option will output the most information and is the most verbose.
+
+h) Gradle daemon
+We already discussed that Gradle executes in a JVM, and each time we invoke the gradle command, a new JVM is started, the Gradle classes and libraries are loaded, and the build is executed. We can reduce the build execution time if we don't have to load JVM and Gradle classes and libraries each time we execute a build. The --daemon command-line option starts a new Java process that will have all Gradle classes and libraries already loaded and then execute the build. Next time when we run Gradle build, only the build is executed as the JVM with the required Gradle classes and libraries is already running.
+
+$ gradle --daemon helloWorld
+Starting a new Gradle Daemon for this build (subsequent builds will be faster).
+
+$ gradle helloWorld
+
+Even though the daemon process is started, we can still run Gradle tasks without using the daemon. We use the --no-daemon command-line option to run a Gradle build, and then the daemon is not used
+
+$ gradle --no-daemon helloWorld
+
+To stop the daemon process, we use the --stop command-line option
+gradle --stop
+
+
+i) Defining properties using an external file
+
+Basically, we can set the properties for our project in an external file "gradle.properties". We can place the file in the project directory or Gradle user home directory. The default Gradle user home directory is $USER_HOME/.gradle. A property defined in the properties file, in the Gradle user home directory, overrides the property values defined in a properties file in the project directory.
+
+j) Passing properties via the command line
+
+Instead of defining the property directly in the build script or external file, we can use the -P command-line option to add an extra property to a build. We can also use the -P command-line option to set a value for an existing property. If we define a property using the -P command-line option, we can override a property with the same name defined in the external gradle.properties file.
+
+$ gradle -Pversion=1.1 -PcustomProperty=custom showProperties
+
+k) Defining properties via system properties
+
+We can also use Java system properties to define properties for our Gradle build. We use the -D command-line option just like in a normal Java application. The name of the system property must start with org.gradle.project, followed by the name of the property we want to set, and then by the value.
+
+$ gradle -Dorg.gradle.project.version=2.0 -Dorg.gradle.project.customProperty=custom showProperties
+
+l) Adding properties via environment variables
+
+Using the command-line options provides much flexibility; however, sometimes we cannot use the command-line options because of environment restrictions or because we don't want to retype the complete command-line options each time we invoke the Gradle build. Gradle can also use environment variables set in the operating system to pass properties to a Gradle build.
+
+The environment variable name starts with ORG_GRADLE_PROJECT_ and is followed by the property name.
+
+task showProperties { 
+    doLast { 
+        println "Version: $version" 
+        println "Custom property: $customProperty" 
+    } 
+} 
+
+$ ORG_GRADLE_PROJECT_version=3.1 \
+ORG_GRADLE_PROJECT_customProperty="Set by environment variable" \
+gradle showProp
+:showProperties
+Version: 3.1
+Custom property: Set by environment variable
+BUILD SUCCESSFUL
+Total time: 1.373 secs
+
+m) Offline usage -
+If we don't have access to a network at some location, we might get errors from our Gradle build, when a task needs to download something from the Internet, for example. We can use the --offline command-line option to instruct Gradle to not access any network during the build. This way we can still execute the build if all necessary files are already available offline and we don't get an error.
+
+
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+
+B) Section 2 - Tasks 
+
+Each task has some pre-defined properties and methods. A plugin can add properties and methods to a task through the task's Convention object.
+
+Few task properties - dependsOn, description, group etc.
+Few task methods - dependsOn(paths), doFirst(action), doLast(action) etc.
+
+Section B-1) Defining tasks - Adding actions to tasks
+
+We can use the doFirst and doLast methods to add actions to our task.
+
+task first {
+    doFirst {
+        println 'Running first'
+    }
+}
+
+Closures are an important part of Groovy and are used throughout Gradle build scripts. Closures are basically reusable pieces of code that can be assigned to a variable or passed to a method. A closure is defined by enclosing the piece of code with curly brackets ({... }). We can pass one or more parameters to the closures. We can define a name for the parameter and use this name in the code. This is what we did for the second and third tasks; wherein, we named the closure parameters task and taskObject, respectively.
+ 
+task second {
+    doLast { Task task ->
+		// Using explicit name 'task' as closure parameter.
+        // We also defined the type of the parameter.
+        // This can help the IDE to add code completion.
+        println "Running ${task.name}"
+    }
+}
+
+task third {
+    doLast { taskObject ->
+    println 'Running ' + taskObject.name
+	}
+}
+
+------------------------------------------------------------------------------------
+
+Section B-2)  Task description
+
+// Use description property of task to set description. 
+task first(description: 'Base task') { 
+doLast {
+    println "I am first" 
+}
+} 
+ 
+
+$ gradle tasks --all
+...
+Other tasks
+-----------
+first - Base task
+
+------------------------------------------------------------------------------------
+
+Section B-3) Accessing tasks as project properties
+
+// Create a simple task.
+task simple 
+	doLast {
+	 task ->
+		println "Running ${task.name}"
+}
+ 
+// The simple task is available as project property.
+simple.description = 'Print task name'
+ 
+// We can invoke methods from the Task object.
+simple.doLast {
+    println "Done"
+}
+ 
+// We can also reference the task
+// via the project property
+// explicitly.
+project.simple.doFirst {
+    println "Start"
+}
+
+
+$ gradle -q simple
+Start
+Running simple
+Done
+
+------------------------------------------------------------------------------------
+
+Section B-4) Adding additional properties to tasks
+
+A task object already has several properties and methods. However, we can add any arbitrary new property to a task and use it. Gradle provides an ext namespace for the task object. We can set new properties and use them again once they are set. In the following sample, we print the value of the message task property. The value of the property is assigned with the simple.ext.message = 'world' statement:
+
+// Create simple task.
+task simple {
+	doLast {
+		println "Hello ${message}"
+	}
+} 
+ 
+// We set the value for
+// the non-existing message
+// property with the task extension
+// support.
+
+simple.ext.message = 'world'
+
+When we run the task, we get the following output:
+
+:simple
+Hello world
+BUILD SUCCESSFUL
+Total time: 0.584 secs
+
+------------------------------------------------------------------------------------
+
+Section B-5) Defining dependencies between tasks 
+
+a) In Gradle, we can add task dependencies with the dependsOn method for a task. We can even specify more than one task name or object to specify multiple task dependencies. First, let's look at a simple task dependency:
+
+
+task first { 
+	doLast { task -> 
+		println "Run ${task.name}" 
+	}
+} 
+
+
+task second { 
+	doLast { task -> 
+		println "Run ${task.name}" 
+	} 
+} 
+ 
+// Define dependency of task second on task first 
+second.dependsOn 'first' 
+
+Note that we define the dependency of the second task on the first task, in the last line. When we run the script, we see that the first task is executed before the second task
+
+
+$ gradle second
+:first
+Run first
+:second
+Run second
+BUILD SUCCESSFUL
+Total time: 0.583 secs
+
+b) Another way of defining the dependency between tasks is to set the dependsOn property instead of using the dependsOn method. In the following piece of code, we use the property to define the dependency of the second task. For the third task, we immediately define the property when we define the task.
+
+task first { 
+	doLast { task -> 
+		println "Run ${task.name}" 
+	}
+} 
+
+
+task second { 
+	doLast { task -> 
+		println "Run ${task.name}" 
+	}
+} 
+ 
+ 
+// Use property syntax to define dependency. 
+// dependsOn expects a collection object. 
+second.dependsOn = ['first'] 
+
+// Define dependsOn when we create the task. 
+task third(dependsOn: 'second' { 
+	doLast { task -> 
+		println "Run ${task.name}" 
+	}
+} 
+
+
+When we run the third task on the command line, we see that all three tasks are executed, as follows:
+
+$ gradle -q third
+Run first
+Run second
+Run third
+
+d) We can assign the task closure to a variable. We can reuse the variable name in our task definitions. 
+
+// We assign the task closure 
+// to a variable. We can reuse 
+// the variable name in our task definitions. 
+def printTaskName = { task -> 
+    println "Run ${task.name}" 
+} 
+ 
+// We use the variable with the closure. 
+task third(dependsOn: 'second') {
+	printTaskName 
+}
+ 
+task second(dependsOn: 'first') {
+	printTaskName 
+}
+
+task first {
+	printTaskName 
+} 
+
+
+e) Defining dependencies via closures
+
+We can also use a closure to define the task dependencies. The closure must return a single task name or object, or a collection of task names or task objects. Using this technique, we can really fine-tune the dependencies for our task. For example, in the following build script, we define a dependency for the second task on all tasks in the project with task names that have the letter 'f' in the task name.
+
+def printTaskName = { task -> 
+    println "Run ${task.name}" 
+} 
+ 
+task second {
+	printTaskName 
+}
+ 
+// We use the dependsOn method 
+// with a closure. 
+second.dependsOn { 
+    // We use the Groovy method findAll 
+    // that returns all tasks that 
+    // apply to the condition we define 
+    // in the closure: the task name 
+    // starts with the letter 'f'. 
+    project.tasks.findAll { task -> 
+        task.name.contains 'f' 
+    } 
+} 
+ 
+task first {
+	printTaskName 
+} 
+ 
+task beforeSecond {
+	printTaskName 
+}
+
+$ gradle second
+:beforeSecond
+Run beforeSecond
+:first
+Run first
+:second
+Run second
+BUILD SUCCESSFUL
+Total time: 0.602 secs
+
+------------------------------------------------------------------------------------
+
+Section B-6) Setting default tasks 
+
+We can also define a default task or multiple default tasks that need to be executed, even if we don't explicitly set the task name. So, if we run the gradle command without arguments, the default task of our build script will be executed.
+
+defaultTasks 'first', 'second'   // To set the default task or tasks, we use the defaultTasks method.
+ 
+task first { 
+    doLast { 
+        println "I am first" 
+    } 
+} 
+ 
+task second { 
+    doFirst { 
+        println "I am second" 
+    } 
+} 
+
+
+$ gradle
+:first
+I am first
+:second
+I am second
+BUILD SUCCESSFUL
+Total time: 0.558 secs
+
+------------------------------------------------------------------------------------
+
+Section B-8) Skipping tasks
+
+a) Every task has an enabled property. By default, the value of the property is true, which means that the task is enabled and executed. We can change the value and set it to false in order to disable the task and skip its execution.
+
+In the following sample, we check the existence of a directory, and if it exists, the enabled property is set to true; if not, it is set to false:
+
+
+task listDirectory {
+    def dir = new File('assemble')
+ 
+    // Set value for enabled task property.
+    enabled = dir.exists()
+ 
+    // This is only executed if enabled is true.
+    doLast {
+        println "List directory contents: " +
+                dir.listFiles().join(',')
+    }
+}
+
+If we run the task and the directory doesn't exist, we get the following output:
+
+
+$ gradle listDirectory
+:listDirectory SKIPPED
+BUILD SUCCESSFUL
+Total time: 0.563 secs
+
+If we run the task, and this time the directory exists, containing a single file with the name sample.txt, we get the following output:
+
+
+$ gradle listDirectory
+:listDirectory
+List directory contents: assemble/sample.txt
+BUILD SUCCESSFUL
+Total time: 0.566 secs
+
+
+b) We can use the --exclude-tasks (-x) command-line option if we run the build. 
+
+The following script has three tasks with some task dependencies:
+
+// Define closure with task action.
+def printTaskName = { task ->
+    println "Run ${task.name}"
+}
+ 
+task first  {
+	doLast { printTaskName }
+}
+ 
+task second(dependsOn: first) {
+	doLast {
+	 printTaskName
+	}
+}
+
+task third(dependsOn: [second, first]) {
+	doLast {
+	 printTaskName
+	}
+}
+
+If we run the gradle command and exclude the second task, we get the following output:
+
+$ gradle third -x second
+:first
+Run first
+:third
+Run third
+BUILD SUCCESSFUL
+Total time: 0.573 secs
+
+If our third task didn't depend on the first task, only the third task would be executed.
+
+------------------------------------------------------------------------------------
+
+Section B-9) Project properties
+
+The default properties that we can access in a Gradle build are as below - 
+
+version = '1.0' 
+group = 'Sample' 
+description = 'Sample build file to show project properties' 
+ 
+task defaultProperties  { 
+    println "Project: $project" 
+    println "Name: $name" 
+    println "Path: $path" 
+    println "Project directory: $projectDir" 
+    println "Build directory: $buildDir" 
+    println "Version: $version" 
+    println "Group: $project.group" 
+    println "Description: $project.description" 
+    println "AntBuilder: $ant" 
+} 
+
+$ gradle defaultProperties
+:defaultProperties
+Project: root project 'props'
+Name: defaultProperties
+Path: :defaultProperties
+Project directory: /Users/mrhaki/gradle-book/Code_Files/props
+Build directory: /Users/mrhaki/gradle-book/Code_Files/props/build
+Version: 1.0
+Group: Sample
+Description: Sample build file to show project properties
+AntBuilder: org.gradle.api.internal.project.DefaultAntBuilder@3c95cbbd
+BUILD SUCCESSFUL
+Total time: 1.458 secs
+
+-------------------------------------------------------------------
+-------------------------------------------------------------------
+
+C) Section 3 - Using the Gradle Wrapper
+
+gradle -q hello   
+./gradlew -q hello
+gradlew.bat -q hello
+
+Difference?
+
+
+a) Normally, if we want to run a Gradle build, we must have Gradle installed on our computer. Also, if we distribute our project to others and they want to build the project, they must have Gradle installed on their computers. The Gradle Wrapper can be used to allow others to build our project even if they don't have Gradle installed on their computers.
+
+b) The wrapper is a batch script on the Microsoft Windows operating systems or shell script on other operating systems that will download Gradle and run the build using the downloaded Gradle.
+
+c) By using the wrapper, we can make sure that the correct Gradle version for the project is used. We can define the Gradle version, and if we run the build via the wrapper script file, the version of Gradle that we defined is used.
+
+d) In the gradle/wrapper directory, relative to our project directory, we find the gradle-wrapper.jar and gradle-wrapper.properties files. The gradle-wrapper.jar file contains a couple of class files necessary to download and invoke Gradle. The gradle-wrapper.properties file contains settings, such as the URL, to download Gradle. The gradle-wrapper.properties file also contains the Gradle version number. If a new Gradle version is released, we only have to change the version in the gradle-wrapper.properties file and the Gradle Wrapper will download the new version so that we can use it to build our project.
+
+e) To create the Gradle Wrapper batch and shell scripts, we can invoke the built-in wrapper task. This task is already available if we have installed Gradle on our computer. 
+
+$ gradle wrapper
+:wrapper
+BUILD SUCCESSFUL
+Total time: 0.61 secs
+
+After the execution of the task, we have two script files — gradlew.bat and gradlew in the root of our project directory. These scripts contain all the logic needed to run Gradle. If Gradle is not downloaded yet, the Gradle distribution will be downloaded and installed locally.
+
+f) All the generated files are now part of our project. If we use a version control system, then we must add these files to the version control. Other people that check out our project can use the gradlew scripts to execute tasks from the project. The specified Gradle version is downloaded and used to run the build file.
+
+Typical project structure is as - 
+
+projectRoot/
+    src/
+    build.gradle
+    gradle.properties
+    settings.gradle
+    gradlew
+    gradlew.bat
+    gradle/
+        wrapper/
+            gradle-wrapper.jar
+            gradle-wrapper.properties
+
+
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+
+D) Section 4 - Dependency Management and Repositories
+
+When we develop our code, we usually use third-party or open source libraries. These libraries need to be available in the classpath of the compiler, otherwise we will get errors and our build will fail. Gradle provides support for dependency management, so we can define our dependencies in our build file. Gradle will then take care of the necessary configuration for our various tasks.
+
+
+Section D-1) Configurations
+
+a) In a Gradle build file, we group dependencies together in a configuration. A configuration has a name and configurations can extend each other. With a configuration, we can make logical groups of dependencies. For example, we can create a javaCompile configuration to include dependencies needed to compile the Java code. We can add as many configurations to our build as we want. We don't define our dependencies directly in the configuration. A configuration, as with a label, can be used when we define a dependency.
+
+PPT - Configurations
+
+b) After applying Java Plugin, if we execute the dependencies task
+
+$ gradle -q dependencies
+
+$ gradle -q dependencies --configuration testImplementation
+
+--------------------------------------------------------------
+
+Section D-2) Repositories
+
+Dependencies are usually stored in some kind of repository. A repository has a layout that defines a pattern for the path of a versioned library module. Gradle knows, for example, the layout of a Maven repository. Ivy repositories can have customized layouts, and with Gradle, we can configure a customized layout. The repository can be accessible via the filesystem, HTTP, SSH, or other protocols.
+
+PPT - Repositories
+
+We define a repository with the repositories() method. 
+
+repositories { 
+    // Define Bintray's JCenter 
+    // repository, to find 
+    // dependencies. 
+    jcenter() 
+ 
+    // Define Maven Central 
+    // as repository for 
+    // dependencies. 
+    mavenCentral() 
+	
+	// Maven will use a hidden folder in our home directory to store 
+	// the downloaded dependency libraries. We can add this local 
+	// Maven repository with the mavenLocal() method to the list of repositories.
+	mavenLocal() 
+	
+	// Alternative way to define 
+    // flat directory as repository. 
+    flatDir { 
+        dirs '../project-files', '/volumes/shared-libs' 
+        name = 'All dependency directories' 
+    } 
+	
+	
+	// maven repository available through local intranet
+	maven(name: 'Secured repository') { 
+ 
+        // Set credentials to access 
+        // the repository. It is better 
+        // to store the values for username 
+        // and password outside the build file like gradle.properties 
+        credentials { 
+            username = 'username' 
+            password = 'password' 
+      } 
+ 
+      url = 'http://intranet/repo' 
+    } 
+} 
+
+-----------------------------------------------
+
+Section D-3) Defining dependencies
+
+a) We define dependencies in our build project with the dependencies{} script block. 
+
+Dependency types - PPT 
+
+
+b) In the following example build file, we will use the Java plugin so that we get a compile and runtime dependency configuration. We will also assign several external module dependencies to each configuration using the different syntax rules:
+
+apply plugin: 'java' 
+ 
+repositories { 
+    jcenter() 
+} 
+ 
+dependencies { 
+    // Use attributes for the group, name and 
+    // version for the external module dependency. 
+    compile(group: 'org.springframework', 
+      name: 'spring-core', 
+      version: '4.2.3.RELEASE') 
+ 
+    // Use String notation with group, name and 
+    // version in a single String. 
+    runtime('org.springframework:spring-aop:4.2.3.RELEASE') 
+} 
+
+Remember that a Gradle build file is a Groovy script file, so we can define variables to set values and use them in the dependencies{} script block configuration closure. If we rewrite the previous build file, we get the following output:
+
+apply plugin: 'java' 
+ 
+repositories { 
+    jcenter() 
+} 
+
+// an ext block adds two extra properties to the project object
+ 
+ext { 
+    springVersion = '4.2.3.RELEASE' 
+    springGroup = 'org.springframework' 
+} 
+ 
+dependencies { 
+    // Use attributes to define dependency and refer to project properties. 
+    compile(group: springGroup, 
+      name: 'spring-core', 
+      version: springVersion) 
+ 
+    // Use String notation with expression support for variables. 
+    runtime("$springGroup:spring-aop:$springVersion") 
+} 
+
+c) To see the dependencies and the transitive dependencies, we invoke the built-in dependencies task. We get the following output:
+
+$ gradle -q dependencies
+
+------------------------------------------------------------
+Root project
+------------------------------------------------------------
+archives - Configuration for archive artifacts.
+No dependencies
+compile - Compile classpath for source set 'main'.
+\--- org.springframework:spring-core:4.2.3.RELEASE
+    \--- commons-logging:commons-logging:1.2
+default - Configuration for default artifacts.
++--- org.springframework:spring-core:4.2.3.RELEASE
+|    \--- commons-logging:commons-logging:1.2
+\--- org.springframework:spring-aop:4.2.3.RELEASE
+    +--- aopalliance:aopalliance:1.0
+    +--- org.springframework:spring-beans:4.2.3.RELEASE
+    |    \--- org.springframework:spring-core:4.2.3.RELEASE (*)
+    \--- org.springframework:spring-core:4.2.3.RELEASE (*)
+runtime - Runtime classpath for source set 'main'.
++--- org.springframework:spring-core:4.2.3.RELEASE
+|    \--- commons-logging:commons-logging:1.2
+\--- org.springframework:spring-aop:4.2.3.RELEASE
+    +--- aopalliance:aopalliance:1.0
+    +--- org.springframework:spring-beans:4.2.3.RELEASE
+    |    \--- org.springframework:spring-core:4.2.3.RELEASE (*)
+    \--- org.springframework:spring-core:4.2.3.RELEASE (*)
+testCompile - Compile classpath for source set 'test'.
+\--- org.springframework:spring-core:4.2.3.RELEASE
+    \--- commons-logging:commons-logging:1.2
+testRuntime - Runtime classpath for source set 'test'.
++--- org.springframework:spring-core:4.2.3.RELEASE
+|    \--- commons-logging:commons-logging:1.2
+\--- org.springframework:spring-aop:4.2.3.RELEASE
+    +--- aopalliance:aopalliance:1.0
+    +--- org.springframework:spring-beans:4.2.3.RELEASE
+    |    \--- org.springframework:spring-core:4.2.3.RELEASE (*)
+    \--- org.springframework:spring-core:4.2.3.RELEASE (*)
+
+Symbol meanings in dependecy tree 
+
+\--- and +--- are used to show the elements within a dependency tree. The only difference between +--- and \--- is that \--- is used to show the last element of the current dependecy level.
+
+(*) - is used to indicate that dependencies omitted (listed previously)
+
+-> - is used to point the dependency that wins in version conflict.
+
+
+d) To download only the artifact of an external dependency and not the transitive dependencies, we can set the transitive property for the dependency to false as follows:
+
+apply plugin: 'java' 
+ 
+repositories { 
+    jcenter() 
+} 
+ 
+dependencies { 
+    // Configure transitive property with closure. 
+    compile('org.slf4j:slf4j-simple:1.7.13') { 
+        transitive = false 
+    } 
+ 
+    // Or we can use the transitive property as an argument. 
+    compile(group: 'org.slf4j', 
+      name: 'slf4j-simple', 
+      version: '1.7.13', 
+      transitive: false) 
+} 
+
+e) We can also exclude selected transitive dependencies with the exclude() method. Gradle will look at the descriptor file of the module and exclude any dependencies that we have added with the exclude() method.
+
+For example, in the following build file, we exclude the org.slf4j:sl4j-api transitive dependency:
+
+apply plugin: 'java' 
+ 
+repositories { 
+    jcenter() 
+} 
+ 
+dependencies { 
+    // Configure transitive property with closure. 
+    compile('org.slf4j:slf4j-simple:1.7.13') { 
+        exclude 'org.slf4j:slf4j-api' 
+    } 
+} 
+
+g) To set a minimum version number, we can use a special dynamic version syntax. For example, to set the dependency version to a minimum of 2.1 for a dependency, we use a version value 2.1.+. Gradle will resolve the dependency to the latest version after version 2.1 or to version 2.1 itself.
+
+h) If we have a project with a lot of dependencies and these dependencies have transitive dependencies, version conflicts can easily arise. If one module has a dependency on sample:logging:1.0 and another on sample:logging:2.0, Gradle will use the newest version number by default.
+
+To change the default behavior, we set the resolutionStrategy property of a dependency configuration. We can instruct Gradle to fail the build if a conflict arises. This is very useful for debugging version conflicts.
+
+In the following example build file, we instruct Gradle to fail the build if a version conflicts arises for all configurations:
+
+
+apply plugin: 'java' 
+ 
+configurations.all { 
+    resolutionStrategy { 
+        failOnVersionConflict() 
+    } 
+} 
+
+To force a certain version number to be used for all dependencies (even transitive dependencies), we can use the force() method of resolutionStrategy. With this method, we can make sure that the preferred version is always used for a given module:
+
+apply plugin: 'java' 
+ 
+configurations.all { 
+    resolutionStrategy { 
+        force('org.springframework:spring-core:4.2.3.RELEASE') 
+    } 
+} 
+
+------------------------------------------------------------------------
+
+E) Section 5 - Using Gradle for Java Projects
+
+The Gradle Java plugin
+
+1) In Gradle, we can apply plugins to our project. A plugin basically adds extra functionalities such as tasks and properties to our project. Gradle has a Java plugin. This plugin adds tasks for compiling, testing, and packaging Java source code to our project.
+
+2) Create a build file and use the Java plugin.
+
+apply plugin: 'java' 
+
+3) To see the tasks that have been added by the Java plugin, we run the tasks command on the command line and look at the output:
+
+$ gradle tasks --all
+
+ PPT
+
+5) By applying the Java plugin, we must now follow some conventions for our project directory structure. To build the source code, our Java source files must be in the src/main/java directory, relative to the project directory. If we have non-Java source files that need to be included in the JAR file, we must place them in the src/main/resources directory. Our test source files need to be in the src/test/java directory and any non-Java source files required for testing can be placed in src/test/resources. These conventions can be changed if we want or need it, but it is a good idea to stick with them so that we don't have to write any extra code in our build file, which could lead to errors.
+
+PPT
+
+6) Changing the project layout using sourceSets -
+You can configure the project layout by configuring the appropriate source set. 
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/java']  // Change src dir from src/main/java to src/java
+        }
+        resources {
+            srcDirs = ['src/resources']  // // Change resources dir from src/main/resources to src/resources
+        }
+    }
+}
+
+The Java plugin adds the main and test source sets by default.
+
+Few Source set properties - java.srcDirs, java.outputDir, resources.srcDirs, output.classesDirs etc.
+
+7) Demo - Run test, build and Javadoc tasks for a sample Java application and show task relationships
+
+a) test task  - failure and success cases
+
+$ gradle test --info
+
+If we open the build/reports/tests/test/index.html file in a web browser, we get a clear overview of the tests that have run and failed.
+
+b) build task - 
+
+$ gradle build --info
+
+c) Javadoc  task - 
+
+$ gradle javadoc --info
+
+When we run the javadoc task, the documentation is generated and put into the build/docs/javadoc directory.
+
+----------------------------------------------------------------------------
+F) Section 6 - Testing, Executing, and Publishing Artifacts
+
+Section F-1) Testing
+ 
+a) Gradle supports both JUnit and TestNG testing frameworks. 
+
+b) Configuring the test process
+
+To debug the tests, we can set the debug property of the test task. Gradle will start the test process in the debug mode and listen on port 5005 for a debug process to attach to. This way we can run our tests and use an IDE debugger to step through the code.
+
+By default, Gradle will fail the build if any test fails. If we want to change this setting, we must set the ignoreFailures property to true. 
+
+
+apply plugin: 'java' 
+ 
+repositories { 
+    jcenter() 
+} 
+ 
+dependencies { 
+    testCompile('junit:junit:4.12') 
+} 
+ 
+test { 
+    // Add System property to running tests. 
+    systemProperty 'sysProp', 'value' 
+ 
+    // Use the following JVM arguments for each test process. 
+    jvmArgs '-Xms256m', '-Xmx512m' 
+ 
+    // Enable debugging mode. 
+    debug = true 
+ 
+    // Ignore any test failues and don't fail the build. 
+    ignoreFailures = true 
+ 
+    // Enable assertions for test with the assert keyword. 
+    enableAssertions = true 
+} 
+
+c) Gradle can execute tests simultaneously. This means that Gradle will start multiple test processes concurrently. A test process only executes a single test at a time. By enabling parallel test execution, the total execution time of the test task can drastically decrease if we have a lot of tests.
+
+--------------------------------------------------------------------------
+
+Section F-2) Running Java applications
+
+In the following sample build file, we will create the runJava task of the JavaExec type. 
+
+apply plugin: 'java' 
+ 
+task runJava(type: JavaExec) { 
+    dependsOn classes 
+    description = 'Run gradle.sample.SampleApp' 
+ 
+    // Java main class to execute. 
+    main = 'gradle.sample.SampleApp' 
+ 
+    // We need to set the classpath. 
+    classpath sourceSets.main.runtimeClasspath 
+ 
+    // Extra options can be set. 
+    systemProperty 'sysProp', 'notUsed' 
+    jvmArgs '-client' 
+ 
+    // We can pass arguments to the main() method 
+    // of gradle.sample.SampleApp. 
+    args 'mainMethodArgument', 'notUsed' 
+} 
+
+
+$ gradle runJava
+
+--------------------------------------------------------------------------
+
+Section F-3) Publishing artifacts
+
+a) A software project can contain artifacts that we want to publish. An artifact can be a ZIP or JAR archive file or any other file. In Gradle, we can define more than one artifact for a project. We can publish these artifacts in a central repository so that other developers can use our artifacts in their projects. These central repositories can be available on the company intranet, network drive, or via the Internet.
+
+b) Publishing artifacts with Maven Publish Plugin - 
+
+
+// The Maven Publish Plugin provides the ability to publish build artifacts to an Apache Maven repository. 
+
+publishing {
+
+	// defining a publishing repository
+    repositories {
+        maven { url 'https://nexus.prod.cloud.fedex.com:8443/nexus/repository/3530979-CS-DataServices' 
+            credentials {
+                username nexusUser
+                password nexusPassword
+            }
+        }
+    }
+	// This defines a publication called "deployment" that can be published to a Maven repository by virtue of its type: MavenPublication
+	// This publication consists of just the production JAR artifact and its metadata, which combined are represented by the java component of the // // project.
+    publications {
+        deployment(MavenPublication) {
+            from components.java 
+            version version
+        }
+    }
+}
+
+
+

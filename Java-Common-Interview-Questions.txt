@@ -1,0 +1,678 @@
+PowerMock
+
+1) PowerMock is a Java framework that allows you to unit test code normally regarded as untestable.
+2) PowerMock can be used to test Private, final and static methods and a constructor. 
+3) Writing unit tests can be hard and sometimes good design has to be sacrificed for the sole purpose of testability. Often testability corresponds to good design, but this is not always the case. For example final classes and methods cannot be used, private methods sometimes need to be protected or unnecessarily moved to a collaborator, static methods should be avoided completely and so on simply because of the limitations of existing frameworks.
+4) PowerMock is a framework that extends other mock libraries such as EasyMock with more powerful capabilities. PowerMock uses a custom classloader and bytecode manipulation to enable mocking of static methods, constructors, final classes and methods, private methods, removal of static initializers and more.
+5) When writing unit tests it is often useful to bypass encapsulation and therefore PowerMock includes several features that simplifies reflection specifically useful for testing. This allows easy access to internal state, but also simplifies partial and private mocking.
+6) PowerMock is a great extension to EasyMock and Mockito mocking frameworks. It helps us to extend our test cases to cover final classes and final methods too.
+
+PowerMoxk is used because of following Mockito limitations --
+
+Mockito 2.x specific limitations --
+
+	Requires Java 6+
+	Cannot mock static methods
+	Cannot mock constructors
+	Cannot mock equals(), hashCode(). Firstly, you should not mock those methods. Secondly, Mockito defines and depends upon a specific implementation of these methods. Redefining them might break Mockito.
+	
+Mockito 1.x Specific limitations -- 
+	Needs Java 5+
+	Cannot mock final classes
+	Cannot mock final methods 	
+	
+From the standpoint of testing... private methods don't exist.
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+REST API Security
+
+a) Never expose information on URLs
+b) Use Password Hash - Passwords must always be hashed to protect the system (or minimize the damage) even if it is compromised in some hacking attempts. 
+c) Always Use HTTPS
+d) Currently, most RESTful applications leverage OAuth 2.0 and JWT is the newcomer that is gaining more and more popularity with API developers.
+e) OAuth, JWT, and Basic Authentication all use headers for transmitting credentials, and API providers should be doing the same with all API keys. While easy to do as parameters, they are more secure as headers.
+f) Prevent DDos attack for a RESTFul web service
+	1) Consider Adding Timestamp in Request - Along with other request parameters, you may add a request timestamp as an HTTP custom header in API requests. The server will compare the current timestamp to the request timestamp and only accepts the request if it is within a reasonable timeframe (1-2 minutes, perhaps).
+	
+	2) Using API Keys - It is the usage of one or two keys what accompany every API call. API keys are really more about identifying the application and user over being anything about security, but is perceived as secure by many. Public REST services without access control run the risk of being farmed, leading to excessive bills for bandwidth or compute cycles. API keys can be used to mitigate this risk. They are also often used by organization to monetize APIs; instead of blocking high-frequency calls, clients are given access in accordance to a purchased access plan. API keys can be used to throttle usage of the API.
+	
+	3) On AWS cloud platform, we can use services like AWS shield or AWS WAF.
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+Top 5 REST API Security Guidelines
+
+1) Authorization 
+	a) Protect HTTP methods - Make sure the incoming HTTP method is valid for the session token/API key and associated resource collection, action, and record.
+	b) Whitelist allowable methods - It is important for the service to properly restrict the allowable verbs such that only the allowed verbs would work, while all others would return a proper response code (for example, a 403 Forbidden)
+	c) The session token or API key should be sent along as a cookie or body parameter to ensure that privileged collections or actions are properly protected from unauthorized use.
+	d) Protect against cross-site request forgery (CSRF) - For resources exposed by RESTful web services, it's important to make sure any PUT, POST, and DELETE request is protected from Cross Site Request Forgery. Typically one would use a token-based approach.
+	CSRF is an attack that forces an end user to execute unwanted actions on a web application in which they are currently authenticated. CSRF attacks specifically target state-changing requests.
+	Basically a POST or PUT request for a resource should be allowed only from the same origin. Spring security allocates a CSRF token to every legal web page and it is included in all POST/PUT requests.
+	If any request comes from a link without a valid CSRF token then that request is denied. 
+
+2) Input Validation
+	a) URL validations - Attackers can tamper with any part of an HTTP request, including the url, query string, headers, cookies, form fields, and hidden fields, to try to bypass the site’s security mechanisms.
+	b) Validate incoming content-types- The server should never assume the Content-Type. it should always check that the Content-Type header and the content are the same type. A lack of Content-Type header or an unexpected Content-Type header should result in the server rejecting the content with a 406 Not Acceptable response.
+	c) Validate response types- It is common for REST services to allow multiple response types (e.g. application/xml or application/json, and the client specifies the preferred order of response types by the Accept header in the request.
+	d) XML input validation - XML-based services must ensure that they are protected against common XML based attacks by using secure XML-parsing.
+
+3) Output Encoding
+	a) Security headers - The server should also send an X-Content-Type-Options: nosniff to make sure the browser does not try to detect a different Content-Type than what is actually sent (can lead to XSS). Additionally the client should send an X-Frame-Options: deny to protect against drag'n drop clickjacking attacks in older browsers.
+	b) JSON encoding - It's vital that you use a proper JSON serializer to encode user-supplied data properly to prevent the execution of user-supplied input on the browser.
+	c) XML encoding - XML should never be built by string concatenation. It should always be constructed using an XML serializer. 
+	
+4) Cryptography
+	a) Data in transit - Unless the public information is completely read-only, the use of TLS should be mandated, particularly where credentials, updates, deletions, and any value transactions are performed.
+	b) Data in storage
+	c) Message Integrity - JWT can not only be used to ensure the message integrity but also authentication of both message sender/receiver.
+
+5) HTTP Status Codes - Proper status codes should be returned for different situations. Proper error handle may help to validate the incoming requests and better identify the potential security risks.
+   a) HTTP defines status code. When design REST API, don't just use 200 for success or 404 for error.
+   b) 401 (Unauthorized means Unauthenticated) vs 403 (Forbidden means Unauthorized)
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+Troubleshooting Java Memory Issues
+
+1) A memory leak is a type of resource leak that occurs when a computer program incorrectly manages memory allocations in such a way that memory which is no longer needed is not released. 
+2) In Java, a memory leak occurs when object references that are no longer needed (redundant references) are unnecessarily maintained. 
+3) Think of memory leakage as a disease and the OutOfMemoryError as a symptom. But not all OutOfMemoryErrors imply memory leaks, and not all memory leaks manifest themselves as OutOfMemoryErrors.
+
+Deciphering the OutOfMemoryError -- 
+
+1) The OOM is a common indication of a memory leak. Essentially, the error is thrown when there’s insufficient space to allocate a new object. Try as it might, the garbage collector can’t find the necessary space, and the heap can’t be expanded any further. Thus, an error emerges, along with a stack trace. 
+
+2) Is the OOM appearing because the Java heap is full, or because the native heap is full?
+
+3) For a Java process, there are several memory pools or spaces - Java heap, Metaspace, PermGen (in versions prior to Java 8) and native heap.
+
+Types of OOMs with examples -- 
+
+	a) java.lang.OutOfMemoryError: Java heap space
+	
+	1) This message means that the JVM does not have any free space left in the Java heap, and it cannot continue with the program execution.	
+	2) The most common cause of such errors is that the specified maximum Java heap size is not sufficient to accommodate the full set of live objects.
+	3) One simple way to check if the Java heap is large enough to contain all of the live objects in the JVM is to inspect the GC logs.
+	
+	4) Low Java heap size Scenario - In one of the scenarios of "OOM-Java heap space" frequent Full GCs were observed in GC logs. It negatively impacts application performance, slowing it to a crawl. This example suggests that the heap requirement of the application is greater than the specified Java heap size. Increasing the heap size will help avoid these full GCs and circumvent the OutOfMemoryError. 
+	
+	# Start with 256MB of memory, and allow the Java process to use up to 4G (4096MB) of memory.
+		java -Xms256m -Xmx4g
+	
+	5) Memory Leak in the application scenario - As we know, a memory leak occurs when an application unintentionally holds references to objects in the heap, preventing them from being garbage collected. These unintentionally held objects can grow in the heap over time, eventually filling up the entire Java heap space, causing frequent garbage collections and ultimately the program termination with OutOfMemoryError.
+	
+	It is always a good idea to enable GC logging, even in production environments, to facilitate detection and troubleshooting of memory issues as they occur. The following options can be used to turn on the GC logging:
+
+		-XX:+PrintGCDetails
+		-XX:+PrintGCTimeStamps
+		-XX:+PrintGCDateStamps
+		-Xloggc:<gc log file>
+	
+	The first step in detecting memory leaks is to monitor the live-set of the application. The live-set is the amount of Java heap being used after a full GC. If the live-set is increasing over time even after the application has reached a stable state and is under a stable load then that could indicate a memory leak. The heap usage can be monitored with tools including Java VisualVM, Java Mission Control, and JConsole, and can be extracted from the GC logs as well.
+	
+	6) OOM due to finalizers Scenario - If a class has a finalize method, then objects of that type do not have their space reclaimed at garbage collection time. Instead, after garbage collection, the objects are queued for finalization, which occurs later. In the Sun implementation, finalizers are executed by a daemon thread. If the finalizer thread cannot keep up with the finalization queue, then the Java heap could fill up and an OOM could be thrown.
+	
+	7) OOM when parsing deeply nested XML/SOAP response using DOM parser - An unmarshaller deserializes the XML to an object graph. This XML can take the form of a DOM document, an input or output stream, or a SAX handler. If XML/SOAP document in DOM form exceeds Java heap size, OOM error is thrown. While unmarshalling deeply nested SOAP/XML response, JAXB unmarshaller can be configured to use a StAX parser (streaming API) instead of default DOM parser (Tree based API). DOM parser works on the entire XML document, loads it into memory and constructs a tree representation of the document. Unlike DOM, when using StAX parser, XML is processed as a stream of objects and not loaded in memory at once. This way we can prevent OOM when parsing deeply nested XML/SOAP response.
+	
+	8) Collection of Diagnostic Data to troubleshoot OutOfMemoryErrors in the Java heap --
+
+		i) Heap Dumps -- 
+		
+		Ways to Capture Java Heap Dumps
+
+		1) Heap Dumps are vital artifacts to diagnose memory-related problems such as slow memory leaks, Garbage Collection problems, and java.lang.OutOfMemoryError.
+		2) Heap Dumps are also vital artifacts to optimize the memory consumption.
+		3) JVisualVM - JVisualVM is a monitoring, troubleshooting tool that is packaged within the JDK. It can be used to generate both Thread Dump and Heap Dump.
+		4) jmap prints heap dumps into a specified file location. This tool is packaged within JDK. It can be found in \bin folder.
+
+		Heap dumps are the most important data that we can collect when troubleshooting memory leaks. Heap dumps can be collected using jcmd, jmap, JConsole and the HeapDumpOnOutOfMemoryError JVM option as shown below.
+
+			jcmd <process id/main class> GC.heap_dump filename=heapdump.dmp
+			jmap -dump:format=b,file=snapshot.jmap pid
+			JConsole utility, using Mbean HotSpotDiagnostic - Graphical monitoring information about CPU usage, heap memory usage, thread counts, and the classes loaded in the Java VM, all in a single screen.
+			-XX:+HeapDumpOnOutOfMemoryError
+		
+		ii) Heap Histograms --
+		
+		Heap histograms can give us a quick view of the objects present in our heap, and comparing these histograms can help us find the top growers in our Java heap.
+
+			-XX:+PrintClassHistogram and Control+Break
+			jcmd <process id/main class> GC.class_histogram filename=Myheaphistogram
+			jmap -histo pid
+			jmap -histo <java> core_file
+
+	b) java.lang.OutOfMemoryError: PermGen space
+	PermGen has been removed as of Java 8. Up until Java 7, PermGen (short for “permanent generation”) was used to store class definitions and their metadata. Unexpected growth of the PermGen or an OutOfMemoryError in this memory space meant that either the classes are not getting unloaded as expected, or the specified PermGen size is too small to fit all the loaded classes and their metadata.
+	
+	Configure PermGen space using the following JVM options below: (Before Java 8)
+		–XX:PermSize=n –XX:MaxPermSize=m
+	
+	c) java.lang.OutOfMemoryError: Requested array size exceeds VM limit
+	
+	This error indicates that the application (or APIs used by that application) attempted to allocate an array that is larger than the heap size. For example, if an application attempts to allocate an array of 512MB but the maximum heap size is 256MB, then an OOM will be thrown with this error message.
+	
+	d) java.lang.OutOfMemoryError: Native Memory
+	
+	Some examples of the OutOfMemoryError for the native memory are: OutOfMemoryError due to insufficient swap space and OutOfMemoryError due to insufficient process memory
+	
+---------------------------------------------------------------------------------------------------------------	
+	
+
+AppDynamics - 
+
+AppDynamics develops application performance management/monitoring (APM) solutions that deliver problem resolution for highly distributed applications through transaction flow monitoring and deep diagnostics.
+AppDynamics belongs to "Performance Monitoring" category of the tech stack, while Splunk Cloud can be primarily classified under "Log Management".
+
+Some of the features offered by AppDynamics are:
+
+1) End User Monitoring
+2) Real-Time Business Transaction Monitoring
+3) Visualize & Manage your Entire Application
+4) Deep code visibility
+5) Autodiscovery feature - Being able to view your applications via a map like this really improves your perspective of what is going on and makes sure that you don’t miss anything.
+6) Infrastructure Visibility - Monitor the servers and databases critical to supporting application performance.
+7) Application Performance Management - Get complete visibility into every line of code and important transactions across multi-cloud environments.
+8) Monitor any application - Supports public or private cloud infrastructures, or multi-cloud applications
+9) Enterprise grade security - Robust, proven architecture with granular, role-based access controls
+10) Flexible deployment options - AppDynamics can be deployed either on-premises or as SaaS
+11) Dashboard of the health of your business.
+
+--------------------------------------
+
+Splunk - Centralized log management, Analysis and reporting 
+
+Splunk is not an APM tool. It is a log analysis tool. Assume you have 200 servers in your production environment, Splunk can help you analyze the log on each of those 200 servers from a single web based interface. 
+You can get various statistics and generate graphs for a specific error code or error message. You can generate graphs about Get and Post requests. 
+You can get statistics about most accessed url from web access logs. Splunk's strength is not application performance monitoring but analysis and reporting.
+Splunk has good capabilities of handling Big Data.
+Splunk Cloud is detailed as "Easy and fast way to analyze valuable machine data with the convenience of software as a service (SaaS)".
+
+
+Tools like Appdynamics and Dynatrace have plugins to integerate with Splunk. With help of these plugins data from Appdynamics or Dynatrace can be fed to Splunk. 
+With tools like StreamWeaver you can integrate Appdynamics into Splunk
+
+----------------------------------------------------------------------------------
+
+Exceptions
+
+1) Exceptions are for technical people and should not be used to report validation errors to the end user.
+2) Exceptions represent a bug in the software, a mistake made by the programmers, or an unexpected situation such as network outages.
+
+A) When to catch an exception or let it bubble up? and why?
+
+1) Catch specific exceptions at the lowest possible level when you can do something relevant about it. Otherwise, let it bubble up
+
+Lowest level is the level at which you leave your application’s native code to interact with other components (accessing resources over HTTP, reading a file, saving to the database).
+
+Guidelines at lowest level -- 
+
+	a) Handle only specific exceptions
+	b) Handle it only if you have something meaningful to do
+	c) Do not perform logging here
+	d) Let all other exceptions bubble up
+
+2) Catch generic exceptions at the highest possible level, so that you can log them and apologize to the user
+
+Highest level is the last place where you can handle the exception before it is thrown directly to the user. Your goal here is to log the error and forward the details to the programmers so they can identify and correct the error.
+
+Guidelines at highest level -- 
+	a) Handle the generic exceptions (Exception class)
+	b) Log the error by adding more information from current execution context
+	c) Show an apology message to the user
+
+B) When to throw an exception when developing a library? and why?
+
+3) Throw exceptions when you reached an irreversible error situation, according to the context you’re in
+In the context of developing a library. You should throw when you reached an error and there’s nothing more you can do besides letting the consumer of your APIs know about it, and letting them decide.
+
+4) Data validation should have been done at the presentation layer, where you could return a friendly message right away, before submitting them to the backend. If invalid data has reached the heart of the application, 
+it classifies as a programmer mistake, as he or she failed to handle the data at the correct layer. In this case, it is best to let an exception blow up, as it will be logged at the highest level, and to apologize to the user.
+
+5) If you use try catch blocks indiscriminately throughout your application, you may be creating situations and errors that will be difficult to find and debug later.
+
+----------------------------------------------------------------------------------
+
+Using Thread Dumps
+
+1) A thread dump is a snapshot of the state of all threads that are part of the process. The state of each thread is presented with a so called stack trace, 
+which shows the contents of a thread’s stack. Some of the threads belong to the Java application you are running (user threads), while others are JVM internal threads (daemon threads).
+
+2) A thread dump reveals information about an application’s thread activity that can help you diagnose problems and better optimize application and JVM performance.
+for example, thread dumps automatically show the occurrence of a deadlock. 
+
+3) To create a thread dump from a process, do either of the following:
+
+	a) Press Ctrl-Break while the process is running (or by sending SIGQUIT to the process on Linux).
+	b) Enter the following at the command line at startup: bin\jrcmd.exe <pid> print_threads.
+	c) A simple way you can get a thread dump is via the "jstack" utility that ships with the JDK.
+	
+	# find the process IDs of all of my running Java applications
+	$ jps
+	21147 Jps
+	16640 Main
+
+	# take an initial thread dump snapshot of my "Main" Java application
+	$ jstack 16640 > /tmp/my-thread-dump.txt
+
+	# take a second thread dump snapshot and append it to the original
+	$ jstack 16640 >> /tmp/my-thread-dump.txt
+	
+The thread dump appears at the command line.
+
+4) Thread dumps can be used for troubleshooting and diagnostics by Detecting Deadlocks, Detecting Processing Bottlenecks and viewing The Runtime Profile of an Application
+5) APM Tool – App Dynamics can be used to generate Thread dumps.
+6) Java Mission Control (JMC) is a tool that collects and analyze data from Java applications running locally or deployed in production environments. This tool also provides an option to take thread dumps from the JVM.
+
+----------------------------------------------------------------------------------
+
+Types of Threads
+
+1) Java offers two types of threads: user threads and daemon threads.
+2) User threads are high-priority threads. The JVM will wait for any user thread to complete its task before terminating it.
+3) On the other hand, daemon threads are low-priority threads whose only role is to provide services to user threads.
+4) Daemon threads are useful for background supporting tasks such as garbage collection, releasing memory of unused objects and removing unwanted entries from the cache. Most of the JVM threads are daemon threads.
+
+----------------------------------------------------------------------------------
+
+Caching in Hibernate
+
+1) Caching is one of the powerful features of Hibernate and probably one of the most substantial reasons to use the Hibernate framework. 
+It allows developers to build a more responsive web application by minimizing the number of database transactions.
+2) Hibernate maintains different caches for the different purpose, e.g. first level cache at Session level, Second level cache at the SessionFactory level (available to all Sessions) and Query Cache to cache query and its results.
+3) You can use the first level cache to store local data, i.e. the data which is needed by the Session, and you can use the second-level cache to store global data, i.e. something which can be shared across sessions.
+
+First Level Cache in Hibernate --
+1) The first-level cache is the first cache hibernate consults before loading an object from the database. It is maintained at Session level.
+2) When you ask load method to return an object, first time it is loaded from DB. If you load the same object then Hibernate doesn't go to Database, instead it returns the object from first level cache maintained at Session level.
+3) Similarly, when you update a particular object, Hibernate defer the database call to combine multiple database transactions into one, this way, Hibernate improves the performance of your web application.
+4) The data in the first level cache is maintained as long as Session is open, as soon as you close the Session, all data is lost.
+5) The First Level cache is by default enabled.
+
+Second Level Cache in Hibernate -- 
+1) The second-level cache is an optional Cache which Hibernate provides. Unlike first level cache which is accessible only to the session who maintains it, Second-level Cache is accessible to all Sessions.
+2) If one Session loads an object, like Person with id=1 and Second session also loads the same object, only one database call will be made. Next session will get the data from the Second-level Cache.
+3) The Second Level cache is by default disabled.
+
+---------------------------------------------------------------------------------
+
+How to decide pool size for Thread Pools?
+
+There are few factors mentioned below on which thread pool size depends -- 
+
+1) Available Processors (AP) -- Ideal pool size is available processors (AP) in your system or AP+1.
+
+int poolSize  = Runtime.getRuntime().availableProcessors();
+int poolSize  = Runtime.getRuntime().availableProcessors() + 1;
+
+This is ideal pool size, if your multi-threaded task is kind of computation, where threads are not getting block, wait on I/O or some combination.
+
+If your pool size would be less than available processors in your system means you are not using all available processors and not utilizing resources fully.
+On other side, if your pool size is greater than your available processor that means you are creating more threads which a thread pool can handle.
+
+2) Behavior of Tasks -- 
+
+For tasks that also include I/O or other blocking operations, you need a larger pool size for that, since not all of the threads will be schedulable at all times, some will be in wait condition. In order to size the pool properly, you must estimate the ratio of waiting time to compute time for your tasks, this estimate need not be precise and can be obtained through profiling or instrumentation. Alternatively, the size of the thread pool can be tuned by running the application using several different pool sizes under a benchmark load and observing the level of CPU utilization.
+The optimal pool size for keeping the processors at the desired utilization of CUP is:
+
+N = Number of processor available in system.
+U = Target utilization of CUP; 0 >= U <= 1.
+W/C = Ration of wait and computation time.
+
+Number of threads for thread pool can evaluate by this formula:
+
+Number of Threads = N * U * (1 + W/C)
+
+3)  Amdahl’s Law -- 
+
+In application development there are lots of tasks which cannot be perform totally concurrently, there are few tasks which need to be perform sequentially. 
+Therefore it is important to understand, how much proportion of tasks can be executed concurrent and how much speed you would get after making that portion of task concurrent. 
+Therefore, Amdahl’s law is very useful to determine how much speed up you would get if you are breaking up your task into parallelism and sequential.
+
+According to Amdahl’s Law, if P is the proportion of task can be executed parallel then maximum speed up (S) can get with N number of processors (threads) is:
+
+S = 1 / ((1-P) + (P/N))
+
+---------------------------------------------------------------------------------
+
+DOM Vs SAX
+
+1) DOM is Document Object Model. SAX is Simple API for XML.
+2) DOM is Tree Based API. SAX is Event Driven API.
+3) DOM requires more memory. SAX requires less memory.
+4) DOM is useful for smaller Application. SAX is useful for parsing large XML documents.
+5) DOM traversing can be done in any direction. SAX traversing is one in Top to Bottom approach.
+
+---------------------------------------------------------------------------------
+
+SAX Vs StAX
+
+A StAX Parser is median between DOM and SAX parser.
+
+1) SAX is Simple API for XML. StAX is Streaming API for XML.
+2) The SAX Parser pushes the data but StAX parser pulls the required data from the XML.
+3) The StAX parser maintains a cursor at the current position in the document allows to extract the content available at the cursor whereas SAX parser issues events as and when certain data is encountered.
+4) SAX support for XML Schema validation. StAX has no support for XML Schema validation.
+5) SAX does not have support for writing XML. StAX has Support for XML Writing.
+
+---------------------------------------------------------------------------------
+
+Software Integration Solutions
+
+1) Software Integration is a process of merging two or more diverse software systems either mono-directional or bi-directional so that data/functionality flows between that system smoothly.
+2) The process of aggregating diverse sub-systems to combine to form one coherent multi-functional system. It involves conjoining the system and the software applications to act as a whole.
+3) Integration tools for software integration - MuleSoft Anypoint Platform, IBM Enterprise BUS, Spring Integration
+4) Need for Software Integration -- 
+	a) Merging Different Systems
+	b) Integrating Legacy Systems with New-age Applications
+	c) Need for Multi-Functionality
+5) Cases Where Software Integration Can Help Your Company -- 
+
+	a) Needs Multiple Data entries into multiple systems
+	b) Spends a lot of time/manpower to maintain the data in multiple systems
+	c) Due to Multiple systems, human interaction chances of mistakes are more
+	d) The data doesn’t flow timely manner from one system to another
+	e) Want data to reflect on another system quickly or frequent basis
+	f) Customers want to use company systems (this requires the use of API & Connector)
+	g) Having Complex business domain like Finance, banking, insurance, Travel, Healthcare, Telecom, and Retails etc. Complex domain has more chances of integration than simple domain like Education and Entertainment
+	h) Does your employee need to do duplicate work due to entering data into multiple systems?
+	i) Say, your systems are integrated, but are very slow, not seamless, downtime is more and information is not secure
+	j) Your applications are from different vendors, then chances are more for integration
+	k) Do your customers need to interact with your system and they want to integrate your system with their system
+
+---------------------------------------------------------------------------------
+Generics
+
+The lower bound (super) is not allowed in class and method definitions.
+ 
+	//This code does not compile !
+	public class Forbidden<X super Vehicle> { }
+	
+	//This code does not compile !
+	public <T super Integer> List<T> fromArrayToList(T[] a) {
+		List<T> list = new ArrayList<>();
+		return list;
+	}
+
+However, the upper bound (extends) is allowed in class and method definitions.
+
+	// This works!
+	public class Forbidden<X extends Vehicle> { }
+	
+	// This works!
+	public <T extends Number> List<T> fromArrayToList(T[] a) {
+		List<T> list = new ArrayList<>();
+		return list;
+	}
+
+---------------------------------------------------------------------------------
+
+Array Declaration -- 
+
+Student[] arr;   // Valid
+Student arr[];  //valid
+
+int[5] scores; // Invalid index not allowed here
+
+Valid Array Initializations --
+
+int intArray[];    //declaring array
+intArray = new int[20];  // allocating memory to array
+
+OR
+
+int[] intArray = new int[20]; // combining both statements 
+
+OR
+
+int[] intArray = { 1,2,3,4,5,6,7,8,9,10 }; 
+
+OR 
+
+int[] intArray = new int[]{ 1,2,3,4,5,6,7,8,9,10 }; 
+
+
+Multidimensional Arrays --
+
+int[][] intArray = new int[10][20]; //a 2D array or matrix
+int[][][] intArray = new int[10][20][10]; //a 3D array
+
+int intArray[][] = {{1,2,3},{4,5}}; 
+
+Clone() method in Java --
+
+1) Object cloning refers to creation of exact copy of an object in the memory. 
+2) In java, clone() method of java.lang.Object class is used for cloning process.  
+3) It creates a new instance of the class of current object and initializes all its fields with exactly the contents of the corresponding fields of this object.
+4) The objects which implement Cloneable interface are only eligible for cloning process. Cloneable interface is a marker interface which is used to provide the marker to cloning process. 
+5) shallow copy Vs deep copy in java -- 
+
+a) The shallow copy of an object will have exact copy of all the fields of original object. If original object has any references to other objects as fields, then only references of those objects are copied into clone object, copy of those objects are not created. That means any changes made to those objects through clone object will be reflected in original object or vice-versa.  Shallow copy is not 100% independent of original object.
+
+b) Deep copy of an object will have exact copy of all the fields of original object just like shallow copy. But in additional, if original object has any references to other objects as fields, then copy of those objects are also created by calling clone() method on them. That means clone object and original object will be 100% disjoint. They will be 100% independent of each other. Any changes made to clone object will not be reflected in original object or vice-versa.
+
+---------------------------------------------------------------------------------
+ClassNotFoundException Vs NoClassDefFoundError
+
+ClassNotFoundException and NoClassDefFoundError occur when a particular class is not found at runtime. However, they occur at different scenarios.
+
+ClassNotFoundException is an exception that occurs when you try to load a class at run time using Class.forName() or loadClass() methods and mentioned classes are not found in the classpath.
+
+NoClassDefFoundError is an error that occurs when a particular class is present at compile time, but was missing at run time.
+
+---------------------------------------------------------------------------------
+
+Like interface, an abstract class can be used as a data type. 
+
+public abstract class GameObject
+{
+	public abstract void draw();
+	
+	public static void main(String[] args)
+	{
+		GameObject player = new Player();
+	}
+}
+
+public class Player extends GameObject
+{
+	@override 
+	public void draw()
+	{
+	// Something
+	}
+}
+
+---------------------------------------------------------------------------------
+
+SOLID Design Principles 
+
+1) Single Responsibility Principle - A class should have one and only one reason to change i.e. High cohesion.
+This can be achieved by designing highly cohesive classes with well defined boundaries. 
+
+2) Open Closed Principle - Software entities should be open for extension but closed for modification.
+This can be achieved with inheritance (Superclass, abstract class or interface)
+
+3) Liskov Substitution Principle - Subtypes must be substitutable for their base types.
+You should use inheritance only when superclass is replaceable by subclass in all the instances. Do not use inheritance just to save few lines of code.
+
+Circle extends rectangle is not good candidate for inheritance.
+Circle extends shape is good candidate since circle can substitute shape in all the instances.
+
+4) Interface Segregation Principle - Keep your interfaces as small as possible (No fat interface). Clients should not be forced to implement interface methods they do not use (Dummy methods just to keep compiler happy are not helpful!)
+
+5) Dependency Inversion Principle -- Depend upon abstractions (abstract classes/interfaces), not upon concrete classes i.e. Loose coupling.
+
+  For examples see link - https://github.com/in28minutes/in28minutes.github.io/blob/master/_posts/2019-10-01-Software-Design-Principles-022-SOLID-Principles.md
+
+
+---------------------------------------------------------------------------------
+
+REST Vs SOAP
+
+1) SOAP - Simple Object Access Protocol, REST - REpresentational State Transfer
+2) SOAP - Protocol and REST - Architecture Style
+3) SOAP - Works with almost any Internet protocol (HTTP, FTP and SMTP). REST Works mostly with HTTP.
+4) SOAP only works with XML formats whereas REST works with plain text, XML, HTML and JSON.
+5) SOAP sends envelope with header and body as request/response. REST sends request/response as a postcard.
+6) SOAP requires more bandwidth. REST requires less bandwidth.
+7) SOAP is fast. REST is slow.
+8) SOAP uses WSDL for documentation of a web service. REST uses Swagger for documentation of a web service.
+9) SOAP uses user-defined status codes to communicate with client. REST uses standard HTTP status codes to communicate with client. 
+10) SOAP is very secure since it can encrypt whole envelope and hide business logic (hence SOAP is preferred in banking apps). REST is less secure compared to SOAP since URI can expose business logic.
+11) SOAP has more overhead to send whole envelope across. REST is lightweight as compared to SOAP. 
+12) SOAP follows strict standards in terms of service-contract, WSDL etc. REST is simple to implement and do not follow strict standards as compared to SOAP.
+
+---------------------------------------------------------------------------------
+
+
+HATEOAS - Hypermedia as the engine of application state
+
+---------------------------------------------------------------------------------
+
+
+JWT (JSON Web Tokens)
+
+1) JWT has 3 parts: Header, Payload and Signature.
+2) Header and Payload parts are Base 64 encoded.
+3) Header part contains algorithm name used in creation/verification of signature and Token type (JWT). 
+4) Header and signature parts are for authenticity of JWT.
+5) For first authentication request by client (with only username and password), server creates and returns JWT. 
+6) Server also creates a signature part with combination of Header, Payload and Secret and sends back to client as part of JWT.
+7) When client sends a JWT with subsequent requests, server verifies it with the help of signature part.
+8) JWT is not for authentication, it is for authorization of subsequent requests after initial authentication.
+9) Initial authentication can be by usual username/password authentication or token authentication.
+10) Client saves JWT in browser local storage or cookie.
+11) Client sends JWT in Authorization header as - Bearer JWT.
+12) JWT is visible to outside world so it should not contain sensitive information like credentials, SSN etc.
+13) JWT should contain just enough information for server to know who the user is.
+14) JWT can be used with OAuth to enhance security even further so that non one can steal JWT and impersonate as a user. 
+15) We can set expiration timestamp on JWT.
+
+--------------------------------------------------------------------
+
+OAuth Vs JWT
+
+1) OAuth is a framework for authentication and authorization whereas JWT is just a protocol for authorization.
+2) JWT can be used with OAuth to enhance security even further.
+3) OAuth involves resource server, client application and Authorization server (Facebook/Google or even custom Authorization microservice) 
+
+---------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	   
+	
