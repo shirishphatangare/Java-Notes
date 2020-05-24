@@ -15,8 +15,8 @@ buildscript {
 	// repositories for buildscript block
     
 	repositories {
-        maven { url 'https://nexus.prod.cloud.fedex.com:8443/nexus/repository/central/' }
-        maven { url "https://nexus.prod.cloud.fedex.com:8443/nexus/repository/Gradle/" }
+        maven { url 'https://nexus.prod.cloud.sample.com:8443/nexus/repository/central/' }
+        maven { url "https://nexus.prod.cloud.sample.com:8443/nexus/repository/Gradle/" }
     }
 	
 	// Having declared the build script classpath, you can use the classes in your build script as you would any other classes on the classpath. 
@@ -72,7 +72,7 @@ ext {
 
 // assign values to default project properties
 
-group = 'com.fedex.csds'
+group = 'com.sample.csds'
 
 // Calling getVersion() method to get the most recent tag
 version = getVersion()
@@ -105,10 +105,10 @@ clean {
 }
 
 repositories {
-    maven { url 'https://nexus.prod.cloud.fedex.com:8443/nexus/repository/central/' }
-    maven { url 'https://nexus.prod.cloud.fedex.com:8443/nexus/repository/redux' }
-    maven { url 'https://nexus.prod.cloud.fedex.com:8443/nexus/repository/oracle' }
-    maven { url 'https://nexus.prod.cloud.fedex.com:8443/nexus/repository/3530979-CS-DataServices' }
+    maven { url 'https://nexus.prod.cloud.sample.com:8443/nexus/repository/central/' }
+    maven { url 'https://nexus.prod.cloud.sample.com:8443/nexus/repository/redux' }
+    maven { url 'https://nexus.prod.cloud.sample.com:8443/nexus/repository/oracle' }
+    maven { url 'https://nexus.prod.cloud.sample.com:8443/nexus/repository/3530979-CS-DataServices' }
 }
 
 
@@ -134,16 +134,16 @@ dependencies {
 	// To download only the artifact of an external dependency and not the transitive dependencies, 
 	// we can set the transitive property for the dependency to false
 	
-    implementation('com.fedex.framework:security-server-authentication:1.0.11.RELEASE'){ transitive = false }
+    implementation('com.sample.framework:security-server-authentication:1.0.11.RELEASE'){ transitive = false }
     implementation 'com.h2database:h2'
     implementation 'com.github.ben-manes.caffeine:caffeine'
     implementation 'net.logstash.logback:logstash-logback-encoder:5.2'
 
     //implementation('org.hibernate:hibernate-jcache')
-    //implementation('com.fedex.framework:security-server-authorization:1.0.3.RELEASE'){ transitive = false }
+    //implementation('com.sample.framework:security-server-authorization:1.0.3.RELEASE'){ transitive = false }
     //implementation 'com.github.ben-manes.caffeine:jcache'
     
-    testImplementation('com.fedex.framework:security-client:1.1.0.RELEASE'){ transitive = false } //1.1.0.RELEASE)
+    testImplementation('com.sample.framework:security-client:1.1.0.RELEASE'){ transitive = false } //1.1.0.RELEASE)
     testImplementation('org.springframework.boot:spring-boot-starter-test'){
        exclude group: 'junit', module: 'junit' //by both name and group
     }
@@ -166,8 +166,8 @@ swagger {
     apiSource {
         attachSwaggerArtifact = false
         springmvc = true
-        //locations = [ 'com.fedex.csds.core.api', 'com.fedex.csds.core.web' ]
-        locations = ['com.fedex.csds']
+        //locations = [ 'com.sample.csds.core.api', 'com.sample.csds.core.web' ]
+        locations = ['com.sample.csds']
         schemes = ['https']
         basePath = '/v1/core'
         descriptionFile = new File("$projectDir/README.md")
@@ -179,12 +179,12 @@ swagger {
             description = 'Multi use API for majority of clients needing access to DataHub and Workday data'
             termsOfService = "Don't be evil"
             contact {
-                email = 'Dataservices_API_dev@corp.ds.fedex.com'
+                email = 'Dataservices_API_dev@corp.ds.sample.com'
                 name = 'Corporate Systems Data Services'
-                url = 'https://pub.purplehub.fedex.com/sites/CSDS/CS%20Data%20Services%20Documentation/Forms/AllItems.aspx'
+                url = 'https://pub.purplehub.sample.com/sites/CSDS/CS%20Data%20Services%20Documentation/Forms/AllItems.aspx'
             }
             license {
-                name = 'Authorized internal FedEx users only'
+                name = 'Authorized internal sample users only'
             }
         }
         securityDefinition {
@@ -391,8 +391,8 @@ jacocoTestReport {
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(it) {
-                exclude "com/fedex/csds/core/api/**"
-                exclude "com/fedex/csds/core/dao/model/**"
+                exclude "com/sample/csds/core/api/**"
+                exclude "com/sample/csds/core/dao/model/**"
             }
         }))
     }
@@ -458,7 +458,7 @@ publishing {
 
 	// defining a publishing repository
     repositories {
-        maven { url 'https://nexus.prod.cloud.fedex.com:8443/nexus/repository/3530979-CS-DataServices' 
+        maven { url 'https://nexus.prod.cloud.sample.com:8443/nexus/repository/3530979-CS-DataServices' 
             credentials {
                 username nexusUser
                 password nexusPassword

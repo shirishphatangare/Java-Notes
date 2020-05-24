@@ -22,11 +22,11 @@ pipeline{   // All valid Declarative Pipelines must be enclosed within a pipelin
 	
     ORG_GRADLE_PROJECT_nexusUser="$NEXUS_USR"
     ORG_GRADLE_PROJECT_nexusPassword="$NEXUS_PSW"
-    WTCDEV2="https://api.sys.wtcdev2.paas.fedex.com"
-    EDCBO1="https://api.sys.edcbo1.paas.fedex.com"
+    WTCDEV2="https://api.sys.wtcdev2.paas.sample.com"
+    EDCBO1="https://api.sys.edcbo1.paas.sample.com"
     EAI_NUM="3530979"
-    CLOUD_LOG_HOST_DEV="c0010137.test.cloud.fedex.com"
-    CLOUD_LOG_HOST_PROD="c0014584.prod.cloud.fedex.com"
+    CLOUD_LOG_HOST_DEV="c0010137.test.cloud.sample.com"
+    CLOUD_LOG_HOST_PROD="c0014584.prod.cloud.sample.com"
   }
 
   /* The options directive allows configuring Pipeline-specific options from within the Pipeline itself. Pipeline provides a number of these options, such as buildDiscarder, but they may also be provided by plugins, such as timestamps. */
@@ -93,8 +93,8 @@ pipeline{   // All valid Declarative Pipelines must be enclosed within a pipelin
 		  
           jacoco(  									
             skipCopyOfSrcFiles: true,
-            exclusionPattern: '**/com/fedex/csds/core/api/**,**/com/fedex/csds/core/dao/model/**,**/com/fedex/csds/api/**',
-            sourceExclusionPattern: '**/com/fedex/csds/core/api/**,**/com/fedex/csds/core/dao/model/**,**/com/fedex/csds/api/**'
+            exclusionPattern: '**/com/sample/csds/core/api/**,**/com/sample/csds/core/dao/model/**,**/com/sample/csds/api/**',
+            sourceExclusionPattern: '**/com/sample/csds/core/api/**,**/com/sample/csds/core/dao/model/**,**/com/sample/csds/api/**'
          )
         }
       }
@@ -318,7 +318,7 @@ pipeline{   // All valid Declarative Pipelines must be enclosed within a pipelin
     stage('download Nexus file'){ // stage-10 - download Nexus file
       when{ branch 'master' }
       steps{
-          downloadNexusArtifact groupId:"com.fedex.csds", // Where downloadNexusArtifact is defined?
+          downloadNexusArtifact groupId:"com.sample.csds", // Where downloadNexusArtifact is defined?
           artifactId: "CSDSApi",
           repo: "3530979-CS-DataServices",
           release: true,
@@ -403,7 +403,7 @@ pipeline{   // All valid Declarative Pipelines must be enclosed within a pipelin
         mail(
           body: "${EMAIL_BODY}",
           subject: 'CM MTP Request',
-          to: 'Dataservices_API_Production_Build@corp.ds.fedex.com'
+          to: 'Dataservices_API_Production_Build@corp.ds.sample.com'
         )
 		
 		/*Office 365 Connector Plugin is used to send actionable messages in Outlook, Office 365 Groups, and Microsoft Teams. office365ConnectorSend command allows sending running Jobs status notifications. Once the Office 365 Connector plugin is installed, webhooks for notifications are defined in JenkinsFile as below -
