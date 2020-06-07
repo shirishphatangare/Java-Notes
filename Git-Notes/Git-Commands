@@ -1,0 +1,414 @@
+Clone the repository.
+git clone <Repo-URL>
+
+
+If some branch is not there in local repository
+git fetch --all 
+git checkout <Branch-Name>
+
+
+Get the status of your local repository.
+git status
+
+"git checkout -- <file>..." to discard changes in working directory
+
+Moves changes from the working directory to the Git staging area
+git add <File-Name>
+git add -A  --> stages all changes
+git add .   --> stages new files and modifications, without deletions
+git add -u  --> stages modifications and deletions, without new files
+
+To unstage
+git reset HEAD
+
+------------------------------------------------------------------------------
+
+Create a branch dev from master --
+
+1) change to master branch
+git checkout master
+
+2) Create a branch dev from master
+git checkout -b dev master
+
+3) push the branch dev to remote
+git push origin dev
+
+
+To Commit - Takes the staged snapshot and commits it 
+git commit -m 'Initial commit'
+git commit <File-Name> -m 'making a change in a branch'
+
+Up until this point, everything you have done is on your local system and invisible to your remote repository until you push those changes.
+Git's collaboration model gives every developer their own copy of the repository, complete with its own local history and branch structure. 
+Users typically need to share a series of commits rather than a single changeset. 
+Instead of committing a changeset from a working copy to the central repository, Git lets you share entire branches between repositories.
+Publish local history by "pushing" branches to other repositories. You see what others have contributed by "pulling" branches into your local repository.
+
+Send your committed changes to remote repository. This command specifies that you are pushing to the target branch on origin (the remote server).
+git push origin <Branch-Name>
+
+To pull all the changes from remote  
+git pull origin <Branch-Name>
+
+Branches are most powerful when you're working on a team. 
+You can work on your own part of a project from your own branch, pull updates from Bitbucket, and then merge all your work into the main branch when it's ready. 
+It's important to understand that branches are just pointers to commits. When you create a branch, all Git needs to do is create a new pointer—it doesn’t create a whole new set of files or folders. 
+
+Creates a branch but does not switch you to that branch
+git branch <Branch-Name>
+
+Checkout the new branch you just created to start using it.
+git checkout <Branch-Name>
+
+Make changes in a file in checked-out branch and save it --- git status --- git add <File-Name> --- git commit <File-Name> -m 'making a change in a branch'
+Merge the changes back into the master branch. (Local branch to Local Master Merge)
+Since you created only one branch and made one change, use the fast-forward branch method to merge. 
+You can do a fast-forward merge because you have a linear path from the current branch tip to the target branch.
+
+1)  Navigate to the top level of your local repository. --- cd <Local-Repo-Path>
+2)  Enter the git status command to be sure you have all your changes committed and find out what branch you have checked out. --- git status
+3)  Switch to the target branch. --- git checkout <Target-Branch-Name>
+4)  Merge changes from the source branch into the target branch --- git merge <Source-Branch-Name>
+5)  You can delete the branch, it it is no longer needed --- git branch -d <Source-Branch-Name>
+To delete a remote branch you can use the command ---        git push origin --delete <branch_name>
+
+Now our local Target-Branch is ready and we need to push local <Target-Branch> to Remote <Target-Branch>
+
+How to push your change to the remote repository -- git push origin <Target-Branch>
+
+
+To undo a merge:
+git merge --abort
+
+Git clean - If you want to see which files will be deleted 
+git clean -n
+
+Git clean - when you are comfortable
+git clean -f
+
+
+git config --global --list
+git config --global user.name "Shirish Phatangare (OSV)"
+git config --global user.email "shirish.phatangare.osv@fedex.com"
+
+--------------------------------------------------------------------------
+When LDAP password changes and  getting access denied error
+Clear old password using below command 
+git config --system --unset credential.helper
+and then provide new password when prompted
+
+Actaully there is no need to remove/unset credential.helper property, simply change password in Windows Credential Manager as below --
+
+When git password changes, update git Credentials stored in Windows Credentials in >> Control Panel\All Control Panel Items\Credential Manager
+Just in case git giving prompts, add credential.helper as manager to read credentials from Credential Manager
+git config --system --add credential.helper manager
+
+--------------------------------------------------------------------------
+
+
+Stashing takes the dirty state of your working directory — that is, your modified tracked files and staged changes — and saves it on a stack of unfinished changes that you can reapply at any time.
+git stash
+
+
+
+
+
+1) Team --- Synchorinise with workspace -- Select destination as remote/origin/<Branch> -- Select both fetch and compare checboxes and click finish) -- Resolve All Confilcts
+2) Commit code using git commit
+3) Use git pull origin <Branch-Name> or git merge
+4) Work on local
+5) add - commit and push local changes to remote
+
+
+
+
+
+# fetch the changes from the remote
+git fetch origin
+
+# show commit logs of changes
+git log master..origin/master
+
+# show diffs of changes
+git diff master..origin/master
+
+# apply the changes by merge..
+git merge origin/master
+
+# .. or just pull the changes
+git pull
+
+
+
+Pull branch from fork
+
+git remote add fork <url of fork>
+git fetch fork
+git checkout -b fork_branch fork/<branch>
+
+
+Local repo associations with remote
+
+Remove Association with upstream
+git branch --unset-upstream
+
+Set Association with upstream
+git branch --set-upstream-to=origin/<Branch-Name>
+
+The current branch offshore-dev has no upstream branch.
+To push the current branch and set the remote as upstream, use --
+
+git push --set-upstream origin offshore-dev
+
+--------------------------------------------------------
+
+When do you need to overwrite local files?
+
+If you feel the need to discard all your local changes and just reset/overwrite everything with a copy from the remote branch then you should follow this guide.
+Important: If you have any local changes, they will be lost. With or without --hard option, any local commits that haven’t been pushed will be lost.
+If you have any files that are not tracked by Git (e.g. uploaded user content), these files will not be affected.
+
+To overwrite your local files do:
+
+git fetch --all
+git reset --hard <remote>/<branch_name>
+
+
+It’s worth noting that it is possible to maintain current local commits by creating a branch from master or whichever branch you want to work on before resetting:
+
+For Example:
+
+git checkout master
+git branch new-branch-to-save-current-commits
+git fetch --all
+git reset --hard origin/master
+
+To remove the last commit from git
+git reset --hard HEAD^
+
+To remove the last two commits
+git reset --hard HEAD~2
+
+
+-------------------------------------------------------------------------
+
+To resolve conflicts manually and merge/pull ours verion
+
+git merge --strategy-option ours origin offshore-dev
+git pull --strategy-option ours origin offshore-dev
+
+-------------------------------------------------------------------------
+
+To resolve conflicts manually and merge/pull theirs verion
+
+git merge --strategy-option theirs origin offshore-dev
+git pull --strategy-option theirs origin offshore-dev
+
+----------------------------------------------------------------
+
+
+Merge one repository to other repository
+
+cd <Dest-repo>
+git remote add old-repo <Src-repo>
+git remote update
+git merge --allow-unrelated-histories old-repo/development
+git push origin development
+
+-----------------------------------------------------------------
+
+
+Github create empty branch
+
+git checkout --orphan empty-branch
+git rm -rf .
+git commit --allow-empty -m "root commit"
+git push origin empty-branch
+
+-----------------------------------------------------------------
+Rename branch
+
+git branch -m old_branch new_branch         # Rename branch locally    
+git push origin :old_branch                 # Delete the old branch    
+git push --set-upstream origin new_branch   # Push the new branch, set local branch to track the new remote
+
+------------------------------------------------------------------
+
+git tags
+
+Listing tags -  git tag -l -n3
+Create tags - git tag -a RELEASE-v1.0.0 -m "Releasing version v1.0.0"
+Deleting tags - git tag -d <tag_identifier>
+Publishing tags - git push origin <tag_identifier>
+
+--------
+warning: you may want to set your merge.renamelimit variable to at least 2507 and retry the command.
+
+git config merge.renameLimit 2507
+git config --unset merge.renameLimit
+
+---------------------------------------------------------------------------------------------
+.gitignore
+---------------------------------------------------------------------------------------------
+
+Git sees every file in your working copy as one of three things:
+
+1) tracked - a file which has been previously staged or committed;
+2) untracked - a file which has not been staged or committed; or
+3) ignored - a file which Git has been explicitly told to ignore.
+
+Ignored files are usually build artifacts and machine generated files that can be derived from your repository source or should otherwise not be committed. Some common examples are:
+
+a) dependency caches, such as the contents of /node_modules or /packages
+b) compiled code, such as .o, .pyc, and .class files
+c) build output directories, such as /bin, /out, or /target
+d) files generated at runtime, such as .log, .lock, or .tmp
+e) hidden system files, such as .DS_Store or Thumbs.db
+f) personal IDE config files, such as .idea/workspace.xml
+
+gitignore - Specifies intentionally untracked files to ignore. There are files you don't want Git to check in to GitHub.
+
+In Terminal, navigate to the root of your Git repository. Enter 'touch .gitignore' to create a .gitignore file.
+
+.gitignore files contain patterns that are matched against file names in your repository to determine whether or not they should be ignored.
+
+You can use # to include comments in your .gitignore file.
+
+----
+
+Some common patterns --
+
+**/logs	--	You can prepend a pattern with a double asterisk to match directories anywhere in the repository.
+
+logs/debug.log
+logs/monday/foo.bar
+build/logs/debug.log
+
+*.log	--	An asterisk is a wildcard that matches zero or more characters.
+
+debug.log
+foo.log
+.log
+logs/debug.log
+
+
+.log
+!important.log	--	Prepending an exclamation mark to a pattern negates it. If a file matches a pattern, but also matches a negating pattern defined later in the file, it will not be ignored.
+
+debug.log
+trace.log
+but not
+important.log
+logs/important.log
+
+
+/debug.log	--	Prepending a slash matches files only in the repository root.
+
+debug.log
+but not
+logs/debug.log
+
+
+logs/debug.log	--	Patterns specifying a file in a particular directory are relative to the repository root. (You can prepend a slash if you like, but it doesn't do anything special.)
+
+logs/debug.log
+but not
+debug.log
+build/logs/debug.log
+
+
+debug.log	--	By default, patterns match files in any directory
+
+debug.log
+logs/debug.log
+
+
+debug?.log	-- A question mark matches exactly one character.
+
+debug0.log
+debugg.log
+but not
+debug10.log	
+
+
+debug[a-z].log	--	Ranges can be numeric or alphabetic. Square brackets match a single character form the specified set.
+
+debuga.log
+debugb.log
+but not
+debug1.log
+debugab.log
+
+
+logs	--	If you don't append a slash, the pattern will match both files and the contents of directories with that name. In the example matches on the left, both directories and files named logs are ignored
+
+logs
+logs/debug.log
+logs/latest/foo.bar
+build/logs
+build/logs/debug.log
+
+
+logs/	--	Appending a slash indicates the pattern is a directory. The entire contents of any directory in the repository matching that name – including all of its files and subdirectories – will be ignored
+
+logs/debug.log
+logs/latest/foo.bar
+build/logs/foo.bar
+build/logs/latest/debug.log
+
+
+logs/**/debug.log	--	A double asterisk matches zero or more directories.
+
+logs/debug.log
+logs/monday/debug.log
+logs/monday/pm/debug.log
+
+----
+
+Committing an ignored file --
+
+It is possible to force an ignored file to be committed to the repository using the -f (or --force) option with git add:
+
+$ cat .gitignore
+*.log
+$ git add -f debug.log
+$ git commit -m "Force adding debug.log"
+
+You might consider doing this if you have a general pattern (like *.log) defined, but you want to commit a specific file. However a better solution is to define an exception to the general rule:
+
+$ echo !debug.log >> .gitignore
+$ cat .gitignore
+*.log
+!debug.log
+$ git add debug.log
+$ git commit -m "Adding debug.log"
+
+----
+
+Ignoring a previously committed file --
+
+If you want to ignore a file that you've committed in the past, you'll need to delete the file from your repository and then add a .gitignore rule for it. Using the --cached option with git rm means that the file will be deleted from your repository, but will remain in your working directory as an ignored file.
+
+A) To untrack a single file that has already been added/initialized to your repository, i.e., stop tracking the file but not delete it from your system use: 
+git rm --cached filename
+
+Example - 
+
+$ echo debug.log >> .gitignore
+$ git rm --cached debug.log
+rm 'debug.log'
+$ git commit -m "Start ignoring debug.log"
+
+You can omit the --cached option if you want to delete the file from both the repository and your local file system.
+
+B) To untrack every file that is now in your .gitignore:
+
+First commit any outstanding code changes, and then, run this command:
+git rm -r --cached .
+
+This removes any changed files from the index(staging area), then just run:
+git add .
+
+Commit it:
+git commit -m ".gitignore is now working"
