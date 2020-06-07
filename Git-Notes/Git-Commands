@@ -14,8 +14,11 @@ git status
 
 Moves changes from the working directory to the Git staging area
 git add <File-Name>
+
 git add -A  --> stages all changes
-git add .   --> stages new files and modifications, without deletions
+git add .   --> stages new files and modifications, without deletions 
+(For newer versions of git 2.x and above git add . and git add -A commands work in same way -- stages all changes)
+
 git add -u  --> stages modifications and deletions, without new files
 
 To unstage
