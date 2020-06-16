@@ -24,6 +24,9 @@ git add -u  --> stages modifications and deletions, without new files
 To unstage
 git reset HEAD
 
+If you've accidentally staged all your changed files you can unstage them all by using 
+git reset
+
 ------------------------------------------------------------------------------
 
 Create a branch dev from master --
