@@ -1,0 +1,848 @@
+Software Architect's Handbook - Summary
+
+-----------------------------------------------
+A) Software Architecture - Introduction
+-----------------------------------------------
+
+-----------------------------------------------
+********The Meaning of Software Architecture********
+-----------------------------------------------
+
+What is Software architecture?
+
+IEEE defines software architecture as: 
+Fundamental concepts or properties of a system in its environment embodied in its elements, relationships, and in the principles of its design and evolution.
+
+Software architecture is the structure or structures of a system, their elements, and the relationships between those elements. It is an abstraction of a software system. 
+Software architecture is about the important stuff. Whatever that is.
+
+
+-----------------------------------------------
+
+Why is software architecture important?
+
+Software architecture provides a number of benefits, such as enabling and inhibiting quality attributes, allowing you to predict software system qualities, easing communication with stakeholders, and allowing you to more easily make changes. It also provides a reusable model that could be used in multiple software products, imposes implementation constraints that reduce complexity and minimizes developer errors, improves cost/effort estimates, and serves as training for new team members.
+
+-----------------------------------------------
+
+What is the software architect role?
+
+Software architects are technical leaders who are ultimately responsible for technical decisions, the architecture, and its documentation. They perform a number of duties and are expected to have knowledge of a variety of topics, both technical and non-technical. 
+
+-----------------------------------------------
+
+What are Technical/Non-technical duties of a software architects ?
+
+Non-technical duties --
+
+1) Providing leadership
+2) Assisting project management, including cost and effort estimation
+3) Mentoring team members
+4) Helping to select team members
+5) Understanding the business domain
+6) Participating in gathering and analyzing requirements
+7) Communicating with a variety of technical and non-technical stakeholders
+8) Having a vision for future products
+
+Technical duties --
+
+1) Understanding non-functional requirements and quality attributes
+2) Being able to effectively design software architectures
+3) Understanding patterns and best practices for software development
+4) Having a deep knowledge of software architecture patterns, their pros and cons, and knowing when to choose one over another
+5) Knowing how to handle cross-cutting concerns
+6) Ensuring performance and security requirements are met
+7) Being able to document and review software architectures
+8) Having an understanding of DevOps and the deployment process
+9) Knowing how to integrate and work with legacy applications
+10) Being able to design software architectures that adapt to change and evolve over time
+
+-----------------------------------------------
+********Software Architecture in an Organization********
+-----------------------------------------------
+
+How Software Architecture can be explained in the context of an organization?
+
+1) Software systems are developed to satisfy the business goals of an organization. Many software architects work as part of an organization. As a result, the organization's business goals, objectives, stakeholders, project management, and processes greatly affect the software architect and their work.
+
+2) Software architects use their expertise and experience to work with project management on estimates for tasks, project planning, and controlling and monitoring the project during its life cycle.
+
+3) Due to communicating with a larger number of stakeholders and management, office politics is a reality that a software architect will have to deal with more than those in other development roles.
+
+4) Organizations will want involvement from software architects for risk management. Software architects can identify risks and come up with approaches to handle them. 
+
+5) Software architects work with the SCM team to coordinate builds, development environments, and to provide input for change management.
+
+6) Software architects should consider introducing software products lines for the many benefits that they provide. Reusing architectural components to create software products allows them to be created faster and with a higher degree of quality.
+
+7) Moving from other roles, such as a software developer role, to being a software architect requires one to expand and broaden their sphere of knowledge to include a deep understanding of their domain. Effectively designing a solution for a problem space requires knowledge about the domain and the requirements for the software.
+
+-----------------------------------------------
+
+What are Types of software architects?
+
+1) Enterprise architect - Enterprise architects are responsible for the technical solutions and strategic direction of an organization. They must work with a variety of stakeholders to understand an organization's market, customers, products, business domain, requirements, and technology.
+
+2) Solution architect - A solution architect converts requirements into an architecture for a solution. They work closely with business analysts and product owners to understand the requirements so that they can design a solution that will satisfy those requirements.
+
+3) Application architect - Application architects focus on one or more applications and their architecture. They ensure that the requirements for their application are satisfied by the design of that application. They may serve as a liaison between the technical and non-technical staff working on an application.
+
+4) Data architect/Information architect - Data architects are responsible for designing, deploying, and managing an organization's data architecture. They focus on data management systems, and their goal is to ensure that the appropriate consumers of an organization's data have access to the data in the right place at the right time.
+
+5) Security architect - A security architect is responsible for an organization's computer and network security. They build, oversee, and maintain an organization's security implementations. Security architects must have a full understanding of an organization's systems and infrastructure so that they can design secure systems.
+
+6) Cloud architect - A cloud architect is someone who is responsible for an organization's cloud computing strategy and initiatives. They are responsible for the cloud architecture used for the deployment of software systems.
+
+7) Infrastructure architect - Infrastructure architects focus on the design and implementation of an organization's enterprise infrastructure. This type of architect is responsible for the infrastructure environment meeting the organization's business goals, and provide hardware, networking, operating system, and software solutions to satisfy them.
+
+
+
+-----------------------------------------------
+B) Software Architecture - Design Process
+-----------------------------------------------
+
+-----------------------------------------------
+********Understanding the Domain********
+-----------------------------------------------
+
+What is Domain-Driven-Design in terms of Software Architecture?
+
+1) Being an effective software architect means understanding the domain of the software you are building. Gaining knowledge of general business topics and a deep understanding of the organization's business is the foundation for becoming an expert on the problem space for which you will be designing a solution.
+
+2) Domain-Driven-Design (DDD) is a proven approach to modeling a domain. Creating a ubiquitous (universal) language that will simplify and facilitate communication between everyone involved in the software project, and working with domain experts, will facilitate learning a particular domain.
+
+3) A domain model is a conceptual model based on the domain and includes both behaviors and data. It represents a part of the overall solution that fulfills the goals of the business. Bounded contexts are a pattern in DDD that represent partitions in the domain model. Similar to subdomains, which are partitions in the domain, bounded contexts are partitions in the domain model. 
+
+4) Other practices, such as separating your domain into subdomains and creating bounded contexts in your domain model, will minimize complexity and allow you and your team to firmly grasp even complex domains.
+
+-----------------------------------------------
+
+What is Requirements engineering?
+
+1) In order to model your domain and design an appropriate architecture, you will need to know the requirements for the software you are building. Requirements engineering involves establishing the functionality that is required by the stakeholders, along with the constraints under which the software must be developed and operate. It encompasses all of the tasks involved in eliciting, analyzing, documenting, validating, and maintaining the requirements of the software system. As a software architect, you will be participating in these tasks so it is helpful to be familiar with them.
+
+-----------------------------------------------
+
+What are Types of software requirements?
+
+1) Business requirements - Business requirements represent the high-level business goals of the organization building the software.
+
+2) Functional requirements - Functional requirements describe the functionality of the software., In other words, what the software system must do. 
+
+3) Non-functional requirements - Non-functional requirements are conditions that must be met in order for the solution to be effective. Quality attributes are a subset of non-functional requirements and include the ilities (desired properties of systems), such as maintainability, usability, availability, portability, testability, and interoperability. 
+
+4) Constraints - Constraints are some type of restriction on the solution and may be technical or non-technical in nature. 
+
+-----------------------------------------------
+
+Requirements elicitation?
+
+1) Knowing the requirements for the software is crucial to designing an appropriate solution. The process is to elicit requirements from stakeholders, which is known as requirements gathering or requirements elicitation. Requirements gathering seems to imply simply collecting requirements that are easy to discover, although it typically involves much more than that. Often, it is necessary to elicit the requirements from stakeholders because not all of them are at the forefront of the thoughts of stakeholders. It is more of a proactive, and not a reactive, process. It is important to get access to proper stakeholders.
+
+2) Techniques to elicit requirements -
+
+a) Interviews
+b) Requirements workshops
+c) Brainstorming
+d) Observation
+e) Focus groups
+f) Surveys
+g) Document analysis
+h) Prototyping
+i) Reverse engineering
+
+-----------------------------------------------
+********Designing Software Architectures********
+-----------------------------------------------
+
+Explain the importance of software architecture design?
+
+1) Software architecture design plays a critical part in the creation and success of software architectures. At its core, architecture design involves making design decisions to produce solutions to design problems. The result is an architecture design that can be validated, formally documented, and eventually used by development teams.
+
+2) Software architecture design involves making decisions in order to satisfy functional requirements, quality attributes, and constraints.
+
+3) Software architecture design comprises defining the structures that will make up the solution and documenting them. The structures of a software system are made up of elements, and the relationships between the elements. The properties and behaviors of the elements that are publicly exposed, through an interface, should be identified as part of the design. The design allows you to understand how the elements behave and interact with each other.
+
+4) Once an initial architecture is designed, it can continue to evolve as development is taking place.
+
+5) A decision that is made for one design issue may affect another one. This is why software architecture design is an iterative process.
+
+6) Software architecture design terms -  structure, element, system, subsystem, module, and component.
+
+7) Software architecture design is when key decisions are made regarding the architecture.
+
+8) Avoiding design decisions can incur technical debt.
+
+9) A software architecture design communicates the architecture to others.
+
+10) The design provides guidance to the developers.
+
+11) The impact of the software architecture design is not limited to technical concerns. It also influences the non-technical parts of the project.
+
+12) Architectural drivers, which are the inputs into the architecture design process, guide the architecture design. They include design objectives, primary functional requirements, quality attribute scenarios, constraints, and architectural concerns.
+
+13) Designing a software architecture can be challenging, but we can leverage design concepts, such as software architecture patterns, reference architectures, tactics, and externally developed software, to assist with the design of solutions.
+
+14) While formal documentation of an architecture does not need to occur during the design process, documenting, such as sketching the design and recording the design rationale, should take place.
+
+-----------------------------------------------
+
+What are top-down and bottom-up approaches to architecture design?
+
+There are two main approaches to architecture design, the top-down and bottom-up approaches. A combination of the two approaches often works best.
+
+1) A top-down approach starts with the entire system at the highest level, and then a process of decomposition begins to work downward toward more detail. The starting point is the highest level of abstraction. As decomposition progresses, the design becomes more detailed, until the component level is reached.
+
+When to use top-down approach --
+
+a) The project is large in size
+b) The project is complex
+c) Enterprise software is being designed for an organization
+d) The team is large, or there are multiple teams that will be working on the project
+e) The domain is well-understood
+
+2) A bottom-up approach begins with the components that are needed for the solution, and then the design works upward into higher levels of abstraction. Various components can then be used together, like building blocks, to create other components and eventually larger structures. The process continues until all the requirements have been met. Unlike the top-down approach, which begins with the high-level structure, there is no up-front architecture design with the bottom-up approach. The architecture emerges as more work is completed. Hence, this is sometimes referred to as emergent design or emergent architecture.
+
+When to use bottom-up approach --
+
+a) The project is small in size
+b) The project is not very complex
+c) Enterprise software for an organization is not being designed
+d) The team is small, or there is only a single team
+e) The domain is not well-understood
+
+-----------------------------------------------
+
+What are Greenfield versus brownfield software systems?
+
+1) A greenfield software system is a completely new software application, one in which you can start with a clean slate. There are no constraints based on any prior work. A greenfield system can be designed for a well-understood domain or for a novel domain.
+
+2) A brownfield software system is an existing software system. If changes to an existing system require architectural changes, architecture design will be needed. Modifications may be necessary for purposes such as correcting defects, implementing new functionality, or changing existing functionality.
+
+-----------------------------------------------
+
+What are Architecture design processes?
+
+Following an architecture design process helps to guide software architects with their design. There are a number of architecture design processes that are available to use, so you'll have to do some research in order to select a process that will work best for your project. Architecture design processes can be modified and supplemented with other techniques and processes to fill in any gaps with the process that you want to use.
+
+1) Attribute-driven design (ADD)
+2) Microsoft's technique for architecture and design
+3) Architecture-centric design method (ACDM)
+4) Architecture development method (ADM)
+
+-------------------------------------------------------------
+********Software Development Principles and Practices********
+-------------------------------------------------------------
+
+What Software Development Principles and Practices can be used by software architects to design high-quality software applications?
+
+1) Designing orthogonal software systems, including a focus on loose coupling and high cohesion.
+
+2) Minimizing complexity in a software system by following principles such as KISS (Keep It Simple, Stupid), DRY (Don't Repeat Yourself), information hiding, YAGNI (You Aren't Gonna Need It), and Separation of Concerns (SoC).
+
+3) The SOLID design principles, which include the Single Responsibility Principle (SRP), Open/Closed Principle (OCP), Liskov Substitution Principle (LSP), Interface Segregation Principle (ISP), and the Dependency Inversion Principle (DIP).
+
+4) Using Dependency Injection (DI) to provide dependencies to a class.
+
+5) Using unit testing to improve the quality of a software system.
+
+6) Ensuring that development environments can be set up easily
+
+7) Practice of pair programming
+
+8) Reviewing deliverables, such as code reviews, formal inspections, and walkthroughs
+
+-----------------------------------------------
+
+What is loose coupling and high cohesion?
+
+Loose coupling -- 
+
+The Law of Demeter (LoD), or principle of least knowledge, is a design principle related to loose coupling. In order to minimize coupling between software modules, the principle can be followed when designing a software. The principle follows the only talk to your friends idiom, which keeps coupling loose by limiting a module's communication with other modules. Another one of the tenets of LoD is that a software module should know as little as possible about other modules.
+
+
+High cohesion --
+
+Cohesion is the degree to which the elements inside a module belong together. It is the strength of the relationships of elements within a module, and how united they are in their purpose. Cohesion is a qualitative measure of the consistency of purpose within a module.
+
+Best practice is to design for Loose coupling and High cohesion.
+
+-----------------------------------------------
+
+-------------------------------------------------------------
+********Software Architecture Patterns********
+-------------------------------------------------------------
+
+Explain about Software Architecture Patterns?
+
+1) Software architecture patterns are one of the most useful tools that can be leveraged for designing a software architecture. Some of the design issues we face as software architects already have proven solutions. Experienced software architects are knowledgeable about available architecture patterns and can recognize when one can be applied to a given design scenario.
+
+2) Leveraging architecture patterns gives the software architect a high-level structure of the software system, and provides a grouping of design decisions that have been repeated and used successfully. Using them reduces complexity by placing constraints on the design and allows us to anticipate the qualities that the software system will exhibit once it is implemented.
+
+3) Some of the common software architecture patterns are as below -
+
+a) Layered architecture - Layered architectures can have layers that are designed to be open or closed. With a closed layer, requests that are flowing down the stack from the layer above must go through it and cannot bypass it. Client-server (2-tier) and N-tier architectures are examples of layered architectures.
+
+b) Event-driven architecture , including event notifications, event-carried state transfer, and event-sourcing
+
+c) Model-View-Controller pattern
+
+d) Model-View-Presenter pattern - The Model-View-Presenter (MVP) pattern is a variation on the MVC pattern. Like the MVC pattern, it provides a separation between UI logic and business logic. However, the presenter takes the place of the controller in the MVP pattern.
+
+Each view in the MVP pattern typically has a corresponding interface (view interface). Presenters are coupled with the view interfaces. As compared with the MVC pattern, the view is more loosely coupled to the model because the two do not interact with each other directly.
+
+e) Model-View-ViewModel pattern - The MVVM pattern works well for rich desktop applications, although it can be used for other types of application, such as web and mobile applications. An example of a framework that can be used to build MVVM applications is Windows Presentation Foundation (WPF). Views and ViewModels communicate through multiple methods, such as data binding, commands, method calls, properties, and events. 
+
+f) Command Query Responsibility Segregation - Command Query Responsibility Segregation (CQRS) is a pattern in which the model that is used to read information is separated from the model that is used to update information.
+
+g) Service-oriented architecture - Service-oriented architecture (SOA) is an architectural pattern for developing software systems by creating loosely coupled, interoperable services that work together to automate business processes. SOA achieves a SoC, which is a design principle that separates a software system into parts, with each part addressing a distinct concern.
+
+-----------------------------------------------
+
+What is difference between multi-layer and multi-tier architectures?
+
+1) When partitioning application logic, layers are a way to organize functionality and components. For example, in a three-layered architecture, the logic may be separated into presentation, business, and data layers. When a software architecture is organized into more than one layer, it is known as a multi-layer architecture.
+
+2) Tiers concern themselves with the physical location of the functionality and components. A three-tiered architecture with presentation, business, and data tiers implies that those three tiers have been physically deployed to three separate machines and are each running on those separate machines. When a software architecture is partitioned into multiple tiers, it is known as a multi-tier architecture.
+
+-----------------------------------------------
+
+What are benefits of using a SOA?
+
+1) Increases alignment between business and technology
+
+2) Promotes federation within an organization - Federation in an organization is an environment in which the software applications and resources work together while simultaneously maintaining their autonomy. Federation gives organizations the freedom not to be required to replace all of their existing systems that must work together.
+
+3) Allows for vendor diversity
+
+4) Increases intrinsic interoperability
+
+5) Works well with agile development methodologies
+
+-----------------------------------------------
+
+What are key priciples of SOA?
+
+Service-oriented solutions are designed so that they adhere to certain key principles. They are:
+
+Standardized service contract
+Service loose coupling
+Service abstraction
+Service reusability
+Service autonomy
+Service statelessness
+Service discoverability
+Service composability
+
+-------------------------------------------------------------
+********Cross-Cutting Concerns********
+-------------------------------------------------------------
+
+What are General guidelines for cross-cutting concerns?
+
+In a software system, a concern is a grouping of logic or functionality that the application is providing. The concerns of the system reflect the requirements. When designing a system, software architects should seek to follow the Separation of Concerns (SoC) principle.
+
+There are two main types of concerns in a software system:
+
+a) Core concern: It represents functionality that is fundamental to the system and is a primary reason as to why the software is being written. For example, the logic related to the calculation of employee salaries and bonuses would be core concerns of a human resource management system. The logic for each core concern is typically localized to particular components.
+
+b) Cross-cutting concern: It is an aspect of the application that relies on and affects other concerns. It is functionality that is used in multiple areas, possibly spanning multiple layers of the application. Examples of cross-cutting concerns include security, logging, caching, configuration management, auditing and error handling. The logic for each cross-cutting concern is needed among multiple components.
+
+General guidelines for cross-cutting concerns --
+
+1) Identifying cross-cutting concerns
+2) Using open-source and third-party solutions
+3) Maintaining consistency
+4) Avoiding scattered solutions - When an implementation for a cross-cutting concern is scattered because it is spread out among multiple modules throughout the application. 
+5) Avoiding tangled solutions - When logic for a cross-cutting concern is mixed with logic for a different concern (either a core concern or another cross-cutting concern).
+
+-----------------------------------------------
+
+How cross-cutting concerns can be implemented in general?
+
+1) Using dependency injection (DI) -
+
+DI allows us to write loosely coupled code and avoid scattering. The logic for the cross-cutting concern will not be duplicated in multiple places. Although this approach eliminates scattering, it does not eliminate tangling.
+
+2) Using the decorator pattern - 
+
+Using the decorator pattern in conjunction with DI will allow you to write logic for the cross-cutting concerns that are neither scattered nor tangled with other logic. However, it does require you to create the decorator classes. For any cross-cutting concerns that are needed in many classes, large software systems will require a large number of decorators to be created. This work can be tedious and repetitive, although some of the code could be generated automatically through code generation.
+
+3) Aspect-oriented programming - 
+
+Aspect-oriented programming (AOP) is a paradigm that was created to handle the scattering and tangling of boilerplate code in object-oriented programming (OOP), such as the code necessary for cross-cutting concerns.
+
+-----------------------------------------------
+
+How Cross-cutting concerns can be implemented for microservices?
+
+1) Leveraging a microservice chassis -
+
+A microservice chassis is a framework that can take care of many of the cross-cutting concerns for microservices and do so in a way that allows all of your microservices to utilize the functionality. Some examples of a microservice chassis include Spring Cloud, Microdot, Gizmo, Go kit, and Dropwizard.
+With a  microservice chassis it is not necessary to implement cross-cutting concerns for each microservice separately.
+
+2) Using the sidecar pattern -
+
+One of the options available to you when developing microservices is polyglot development. You have the flexibility to use multiple programming languages, runtimes, frameworks, and data storage technologies. Microservices are independently developed and deployed, allowing you to select best-of-breed technologies to accomplish the given task.
+
+If your software system is taking advantage of polyglot microservices, it can make it difficult to maintain libraries for cross-cutting concerns. You would need one for each programming language that you are using, resulting in duplication of effort and a lower level of maintainability.
+
+One solution to this problem is to use the sidecar pattern. The logic for cross-cutting concerns are placed in their own process or container (known as a sidecar container or a sidekick container) and then attached to the primary application. Similar to how a motorcycle sidecar is attached to a motorcycle, the sidecar application is attached to the primary application and runs alongside it.
+
+For inter-process communication (IPC) between the primary application and the sidecar application, it is a best practice is to use a communication mechanism that is language and framework agnostic.
+
+----------------------------------------------------
+C) Software Architecture - Quality Attributes
+----------------------------------------------------
+
+-------------------------------------------------------------
+********Software Quality Attributes********
+-------------------------------------------------------------
+
+What are Software Quality Attributes?
+
+Quality attributes are properties of a software system and a subset of its non-functional requirements. Like other requirements, they should be measurable and testable. Software quality attributes are benchmarks that describe the software system's quality and measure the fitness of the system. A software system is made up of a combination of quality attributes, and the degree to which they are fulfilled describes the overall quality of the software.
+
+Internal Quality Attributes - Internal quality attributes can be measured by the software system itself and are visible to the development team.
+
+lines of code (LOC), level of cohesion, readability of the code, and the degree of coupling between modules.
+
+External Quality Attributes - External quality attributes are properties that are externally visible; hence, they are noticeable to end users.
+
+Maintainability
+Usability
+Availability
+Portability
+Interoperability
+Testability
+
+----------------------------------------------------
+
+What are types of software maintenance?
+
+Different types of software maintenance:
+
+Corrective
+Perfective
+Adaptive
+Preventive maintenance
+
+----------------------------------------------------
+
+How to measure Maintainability of software system?
+
+Metrics for Maintainability of a software system are -
+
+1) Lines of code (LOC)
+2) Cyclomatic complexity
+3) Depth of inheritance tree (DIT)
+
+-------------------------------------------------------------
+********Performance Considerations********
+-------------------------------------------------------------
+
+What is a systematic approach to performance improvement?
+
+Performance is a quality attribute of the software system and performance requirements should be documented. Like all requirements, they need to be measurable and testable.
+
+When engaging in an effort to improve performance, it can be helpful to follow a systematic approach. An iterative process that consists of the following steps can be used for performance improvement:
+
+1) Profiling the application
+2) Analyzing the results
+3) Implementing changes
+4) Monitoring changes
+
+-------------------------------------------------------------
+
+How to use how to use server-side caching to improve performance?
+
+1) Software architects should take advantage of caching in order to improve performance and scalability. Caching involves copying data that may be needed again to fast storage so that it can be accessed quicker in subsequent uses.
+
+2) Server-side caches can be used to avoid making expensive data retrievals from the original data store (for example, a relational database) repeatedly. The server-side cache should be placed as close to the application as possible to minimize latency and improve response times.
+
+3) The type of storage used for a server-side cache is designed to be fast, such as an in-memory database. The more data and users that an application has to handle, the greater the benefits of caching.
+
+4) In distributed applications, there are two main types of data caching strategies that you can use. 
+One is the use of a private cache and the other is a shared cache. 
+A private cache is held on the machine that is running the application that is using it. If multiple instances of an application are running on the same machine, then each application instance can have its own cache.
+A shared cache is located in a separate location, possibly accessible through a cache service, and all application instances use the shared cache. 
+
+5) Software architects should consider priming the cache. This means that an application pre-populates the cache at application startup with data that will either be needed at startup, or is widely used enough that it makes sense to make the data available in the cache right from the start.
+
+6) Cache invalidation is the process of replacing or removing cached items. We must ensure that we are handling cached data properly so that stale data is replaced or removed. It may also be necessary to remove cached items if the cache becomes full.
+
+-------------------------------------------------------------
+
+How to improve performance of a web application?
+
+Below are the techniques that can be used to improve the performance of web applications -
+
+1) HTTP caching
+2) Compression
+3) Minification
+4) Bundling
+5) HTML optimization
+6) HTTP/2
+7) Content delivery networks (CDNs)
+8) Web font optimization
+
+-------------------------------------------------------------
+
+How to improve performance of a database?
+
+1) Designing an efficient database schema
+2) Using database indexes
+3) Scaling up and out
+4) Database concurrency
+
+-------------------------------------------------------------
+********Security Considerations********
+-------------------------------------------------------------
+
+What is non-repudiation in software security?
+
+In software systems, we seek non-repudiation, which is the assurance that a person cannot deny an action that they performed. Strong authentication, accurate and thorough logging, and the use of digital certificates can be used to counter repudiation threats.
+
+-------------------------------------------------------------
+
+What is the CIA triad?
+
+The CIA triad represents some primary goals for information security and the protection of information assets. The CIA triad summarizes the attributes that we want our software systems to exhibit. CIA stands for confidentiality, integrity, and availability. Software architects should strive for a balance between the confidentiality, integrity, and availability of information. 
+
+Confidentiality - Confidentiality involves preventing unauthorized individuals from accessing information.
+Integrity - To prevent unauthorized individuals from modifying or destroying information.
+Availability - Software applications must allow authorized individuals access to information in a timely and reliable way.
+
+-------------------------------------------------------------
+
+What is STRIDE threat model?
+
+STRIDE is a security threat model that was originally created by Microsoft. The name is an acronym that represents six threat categories:
+
+1) Spoofing identity
+2) Tampering with data
+3) Repudiation
+4) Information disclosure
+5) Denial-of-service
+6) Elevation of Privilege
+
+-------------------------------------------------------------
+
+What is DREAD risk assessment model?
+
+DREAD is a risk assessment model that can be used to prioritize security threats. Like the STRIDE model, it was created by Microsoft. DREAD is an acronym that represents the following risk factors:
+
+1) Damage potential
+2) Reproducibility
+3) Exploitability
+4) Affected users
+5) Discoverability
+
+-------------------------------------------------------------
+
+What is Cryptography in information security?
+
+1) Cryptography is the study and practice of keeping information secret. It is used in information security to maintain the confidentiality and integrity of data as well as to enable non-repudiation. It allows for secure communication of information from unauthorized parties. 
+
+2) Encryption and cryptographic hash functions, which are tools that can be used to secure data.
+
+3) Encryption is the process of transforming ordinary data, which is referred to as plaintext, into a format that is unreadable, which is referred to as ciphertext.
+
+4) Data that is encrypted can be reverted to its original value. Encryption is used over hashing when there is a need to know the decrypted value. For example, the encryption is used to send a secure message to someone, it must be possible for the recipient to decrypt the message or it will be useless. Decryption is the process by which data is decrypted so that an authorized party can read it again. The pair of algorithms used for encryption/decryption is called a cipher. 
+
+5) Hash function - A hash function is a function that returns a fixed output for a given input. The input can be any size but the output is of fixed size. The output of a hash function is commonly called a hash, but it can also be referred to as a message digest, digest, hash value, or hash code. If there will be no need to know the original value prior to hashing, then hashing should be favored over encryption. Some examples of hash functions include MD5, Secure Hashing Algorithm 256 (SHA-256), and SHA-512. Unlike encryption, where the original value can be determined through decryption, hash functions are not reversible.
+
+6) Cryptographic hash functions - A cryptographic hash function is a type of hash function that guarantees certain properties, making it secure and suitable for cryptography. The combination of these properties makes a hash function useful for cryptography. We can use cryptographic hash functions for things such digital signatures, HTTPS certificates, and in protocols such as SSL/TLS and SSH. 
+
+-------------------------------------------------------------
+
+What are the most common web application security risks?
+
+1) SQL injection
+2) Broken authentication
+3) Sensitive data exposure
+4) XML external entity (XXE) attack
+5) Broken access control
+6) Security misconfiguration
+7) Cross-site scripting (XSS)
+8) Insecure deserialization
+9) Using components with known vulnerable components
+10) Insufficient logging and monitoring
+11) Unvalidated redirects and forwards
+
+----------------------------------------------------
+D) Software Architecture In Action
+----------------------------------------------------
+
+-------------------------------------------------------------
+********Architecting Legacy Applications********
+-------------------------------------------------------------
+
+How to refactor legacy applications?
+
+1) Despite the challenges of maintaining a legacy application, enterprises continue to use them for a variety of reasons. Working on a legacy application is a common task for a software development professional. Most of us have worked on a legacy application, and if you have not already, it is likely that you will at some point in your career. Software architects should be knowledgeable about how to effectively oversee one.
+
+2) There is typically a need to make modifications to a legacy application to fix bugs and add new features. To make it easier for a development team to make these types of change, software architects may seek to refactor legacy applications to make them more maintainable. Software architects may also lead efforts to improve a legacy application by migrating it to the cloud and modernizing its build and deployment processes.
+
+Refactoring a legacy application with the purpose of modernizing and improving it includes performing the following tasks:
+
+a) Making legacy code testable
+b) Removing redundant code
+c) Use tools to refactor the code
+d) Making small, incremental changes
+e) Transforming monoliths to microservices
+
+-------------------------------------------------------------
+********Architecting Modern Applications********
+-------------------------------------------------------------
+
+Software applications today have expectations and requirements that are different from the past. There are demands for greater availability, flexibility, fault tolerance, scalability, and reliability. Continuous delivery and ease of deployment may be requirements for organizations that want to increase their agility in order to keep their software applications closely aligned with their business goals and market opportunities.
+
+1) Microservice architecture
+2) Serverless architecture
+3) Cloud-native applications
+
+-------------------------------------------------------------
+
+What are Characteristics of microservice architecture?
+
+1) The microservice architecture (MSA) pattern builds software applications using small, autonomous, independently versioned, self-contained services. These services use well-defined interfaces and communicate with each other over standard, lightweight protocols.
+
+2) Although microservice architecture is a variation of the service-oriented architecture, there are key differences between the two. Some people even refer to the microservice architecture as SOA done right.
+
+3) In addition to moving us away from monolithic architectures, microservice architecture improves on traditional SOA. Implementing SOA can be quite expensive, difficult to implement, and may be overkill for many applications. The microservice architecture pattern addresses some of these drawbacks. Rather than using an enterprise service bus (ESB), as is common with SOA, microservice architecture favors implementing ESB-like functionality in the services themselves.
+
+4) There are a number of characteristics related to the microservice architecture:
+
+a) Small, focused services
+b) Well-defined service interfaces
+c) Autonomous and independently deployable services
+d) Independent data storage
+e) Communicating with lightweight protocols
+f) Better fault isolation
+
+-------------------------------------------------------------
+
+How to design polyglot microservices?
+
+1) One of the many advantages of using a microservice architecture is that it affords you the option of using multiple programming languages, runtimes, frameworks, and data storage technologies.
+
+2) Two of the concepts related to polyglot microservices are polyglot programming and polyglot persistence.
+
+-------------------------------------------------------------
+
+What is a Serverless architecture?
+
+1) Serverless architecture allows the rapid development of software applications that can handle various levels of traffic in production environments. The term serverless refers to the fact that compute services are provided without requiring you to manage or administer servers. Your code is executed on demand, as it is needed.
+
+2) Serverless architecture can be used for many types of software applications and tasks. Some of the common types of applications that are suited to a serverless architecture include web applications, event-driven data processing, event workflows, scheduled tasks (CRON jobs), mobile applications, chatbots, and Internet of Things (IoT) applications. It is also good for data transformation tasks related to things such as images/video (for example, for the purposes of compression and/or optimization), voice packets, and PDF generation.
+
+3) Serverless architectures use function as a service (FaaS) and backend as a service (BaaS) models to provide backend logic for software applications.
+
+4) Using a serverless architecture for a software system does not have to be an all or nothing approach. In addition to new applications fully leveraging serverless architecture, you may choose to design a part of your system with a serverless architecture and use a different architecture pattern for the other parts of your system.
+For example, an organization may elect to take a hybrid approach and build some new features for an existing application in a serverless environment and use them with other architecture environments.
+
+-------------------------------------------------------------
+
+What is a Cloud-native application?
+
+1) Deploying a software application to the cloud does not make it cloud-native. It is about how the software is designed and implemented, not just where it is run. Cloud-native applications have been designed and developed from the ground up to be deployed in the cloud. In doing so, applications can take full advantage of their deployment environment.
+
+2) Cloud-native applications are specifically designed for the cloud model. Applications designed for the cloud are able to take advantage of it as their target platform, providing organizations with a competitive advantage, greater agility, easier deployment, on-demand scalability, reduced costs, increased resilience, and other benefits.
+
+3) The expectations of today's modern applications are different from those of the past. Cloud-native applications have some distinct characteristics that allow us to meet those expectations and requirements. The Cloud Native Computing Foundation (CNCF) currently defines cloud-native as using an open source software stack to make applications that are containerized, dynamically orchestrated, and microservices-oriented.
+
+-------------------------------------------------------------
+
+What is twelve-factor app methodology to design and develop cloud-native applications?
+
+The twelve-factor app methodology is a set of principles that can be followed when developing applications to be deployed to the cloud. An application that follows this methodology adheres to certain constraints and conforms to a contract. This gives it a level of predictability that facilitates deployment to the cloud. These factors make scaling easier, maximize portability, and ensure that the application can be continuously deployed.
+
+a) Codebase: One codebase tracked in revision control, many deployments
+b) Dependencies: Explicitly declare and isolate dependencies
+c) Configuration: Store configuration in the environment
+d) Backing Services: Treat backing services as attached resources
+e) Build, release, run: Strictly separate the build and run stages
+f) Processes: Execute the app as one or more stateless processes
+g) Port binding: Export services via port binding
+h) Concurrency: Scale out via the process model
+i) Disposability: Maximize robustness with fast startup and graceful shutdown
+j) Development/production parity: Keep development, staging, and production as similar as possible
+k) Logs: Treat logs as event streams
+l) Administrative processes: Run admin/management tasks as one-off processes
+
+-------------------------------------------------------------
+********DevOps and Software Architecture********
+-------------------------------------------------------------
+
+Explain term DevOps?
+
+1) DevOps is a combination of cultural values, practices, and tools that allow an organization to deliver software applications quickly. It is important for software architects to have an understanding of DevOps. An organization you work for may already be practicing it, or they may be interested in transitioning to DevOps. Either way, software architects within an organization play a role in helping and leading others to follow DevOps values and practices.
+
+2) DevOps is the set of tools, practices, and culture that enable both the development and operations terms to work together during the entire life cycle of building software applications. DevOps enables the continuous delivery of software, allowing organizations to respond quickly to changing market opportunities and allowing them to get customer feedback quickly.
+
+3) DevOps involves collaboration between teams and the automation of processes to achieve a common goal of adding value to customers' experiences by delivering software changes quickly and with high quality. DevOps requires a cultural change within an organization, along with the use of new technologies.
+
+4) Shift left is a common term associated with DevOps. The idea is to perform tasks earlier in the life cycle, or to shift them left in the timeline. This term became popular with testing (shift, left testing), meaning that the process of testing a software application should be moved to earlier in the overall development process.
+
+-------------------------------------------------------------
+
+What are the the core values of DevOps?
+
+CALMS is an acronym that represents the core values of DevOps. 
+
+1) Culture
+2) Automation
+3) Lean
+4) Measurement
+5) Sharing
+
+-------------------------------------------------------------
+
+What are seven lean development principles?
+
+1) Eliminate waste: Elimination of waste is important in lean processes. Unnecessary functionality, code, or effort is wasteful. Delaying the delivery of value to customers and inefficient processes are other examples of software development waste.
+
+2) Build quality in: Quality should be a focus for everyone. The writing of tests is one way to think about quality early in the process. The automation of tests helps to ensure that tests are automatically executed.
+
+3) Create knowledge: Team members should share knowledge within the team and across teams. Code reviews, documentation, pair programming, learning sessions, training, and collaboration tools can be used to teach and learn from others.
+
+4) Defer commitment: A decision should be made only after enough information has been collected to make a sound one.
+
+5) Deliver fast: Value should be delivered to customers quickly. This does not mean that the organization should do so recklessly, but rather that it should provide incremental changes reliably, quickly, and frequently.
+
+6) Respect people: As teams work together (and the individuals on those teams), they should do so in a respectful way. Communication and the handling of conflicts should be done in a respectful way.
+
+7) Optimize the whole: Processes should be optimized and bottlenecks should be eliminated when possible. Automation of tests, builds, and deployments are useful in optimization efforts.
+
+-------------------------------------------------------------
+
+What are DevOps practices?
+
+There is variation depending on the organization and the software development methodology used, but in a DevOps release cycle, the following major activities generally take place:
+
+1) Development
+2) Integration
+3) Build and unit testing
+4) Delivery to staging
+5) Acceptance testing
+6) Deployment to production
+
+Three of the main DevOps practices are continuous integration, continuous delivery, and continuous deployment.
+
+continuous integration (CI) - 
+
+1) Continuous integration (CI) is the practice of developers merging their changes into a shared source control repository as often as possible. This reduces the number of conflicting changes and makes it easier to resolve conflicts when any exist.
+
+2) In the DevOps release cycle, the activities covered by continuous integration include development, integration (the checking in of changes into a version control system), and an automated build with automated unit testing
+
+
+Continuous delivery (CD) - 
+
+1) Continuous delivery (CD) is the ability of an organization to release changes to users quickly and in a sustainable, repeatable way. The software is released in short cycles, which reduces the risk, cost, and effort of delivering changes to customers. Organizations that practice continuous delivery have automated their testing as well as their build process.
+
+2) The aim of continuous delivery is to have your software application in a state where it can be deployed to production at any time. This is an important part of DevOps. Continuous delivery includes all of the major activities that take place in a DevOps release cycle. In addition to development, integration, and an automated build with automated unit testing, which are all part of continuous integration, continuous delivery also includes automated delivery to staging, automated acceptance testing, and manual deployment to production.
+
+Continuous deployment - 
+
+Continuous deployment essentially takes continuous delivery one step further. Like continuous delivery, continuous deployment aims to enable organizations to release changes to software systems quickly and reliably. It differs from continuous delivery in that it automates the deployment to production.
+
+-------------------------------------------------------------
+
+What are different Cloud types and Cloud models?
+
+Cloud types - 
+
+a) Public cloud
+b) Private cloud
+c) Hybrid cloud
+
+Cloud models - 
+
+a) Infrastructure as a Service (IaaS)
+b) Containers as a Service (CaaS)
+c) Platform as a Service (PaaS)
+d) Serverless/Function as a Service (FaaS)
+e) Software as a Service (SaaS)
+
+-------------------------------------------------------------
+********Evolutionary Architecture********
+-------------------------------------------------------------
+
+1) Changes to a software system are inevitable as there is a variety of reasons why an application needs to be changed. Software architects should expect change and design their software architecture with that in mind.
+
+2) To create an evolutionary architecture that is capable of adapting to change, software architects should guide architecture modifications to ensure that the characteristics of the architecture and its level of quality remain the same. Fitness functions can be used to help determine whether the architecture continues to achieve the required architectural characteristics.
+
+3) In evolutionary computing, a fitness function is a type of objective function that is used to determine how close a given solution is to achieving the desired result. They return the fitness of the solution. They are used in the design of genetic algorithms to generate an optimal solution for a given problem.
+
+4) When changes do need to be made to an application, following practices, such as making incremental changes and ensuring that architectural components are loosely coupled, will help to facilitate making modifications.
+
+-------------------------------------------------------------
+********Documenting and Reviewing Software Architectures********
+-------------------------------------------------------------
+
+1) An important aspect of being a successful software architect is the ability to record and communicate your architecture to others. architecture descriptions (ADs) and the architecture views are a part of Software documentation.
+
+2) Architecture Descriptions (AD) - An architecture description should include the design rationale behind the design decisions being documented. An architecture description (AD) is a work product used to express and communicate an architecture. The actual architecture of a software system is separate from the artifacts that describe and document it, such that we can create different artifacts for a given architecture. 
+
+3) Architecture views - Architecture views, which are representations of an architecture, allow a software architect to communicate their architecture in a manageable and understandable way. There is a cost associated with creating and maintaining views though, so while we never want the documentation to be insufficient, we do not want to spend time working on views that are not needed.
+
+4) During software architecture design, informal documentation, in the form of sketches, should be made to record design decisions. These sketches may include items such as the structures, elements, relationships between elements, and architecture patterns used. These sketches are important to document the work that was done during design. While they are not complete enough to be released as the final documentation, they can be used as the basis for the architecture views once it comes time to formally document the architecture.
+
+5) The Unified Modeling Language (UML) is a general-purpose, standardized modeling language. It is widely used and understood, making it a popular choice for modeling a software architecture. 
+
+6) As parts of a software architecture design are completed, the development team and relevant stakeholders need to review the architecture to determine whether it will satisfy the functional requirements and quality attribute scenarios.
+
+Following software architecture evaluation methods are used in review - 
+
+1) Software architecture analysis method (SAAM)
+2) Architecture tradeoff analysis method (ATAM)
+3) Active design review (ADR)
+4) Active reviews of intermediate designs (ARID)
+
+
+-----------------------------------------------
+E) Desirable Qualities of a Software Architect
+-----------------------------------------------
+
+-------------------------------------------------------------
+********The Soft Skills of Software Architects********
+-------------------------------------------------------------
+1) Communication skills
+
+2) Listening skills
+
+3) Giving presentations
+
+4) Leadership
+
+5) Negotiation
+
+6) Working with remote resources
+
+-------------------------------------------------------------
+********Becoming a Better Software Architect********
+-------------------------------------------------------------
+
+1) Practicing continuous learning - increase both the breadth and depth of your knowledge. Reading books, taking classes, listening to podcasts, reading blog posts, and watching videos are all ways that you can learn new things.
+
+2) Participating in open source projects
+
+3) Writing your own blog
+
+4) Spending time teaching others
+
+5) Trying new technologies
+
+6) Continuing to write code
+
+7) Attending user groups and conferences
+
+8) Taking responsibility for your work
+
+9) Being proud of your work
+
+10) Stay curious, keep learning, and never stop asking questions. Have an open mind and continue to create new things. Always strive to make the things you put out in the world as good as they can be. Be a software architect.
+
+-------------------------------------------------------------END-------------------------------------------------------------
+
