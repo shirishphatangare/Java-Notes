@@ -1,0 +1,2380 @@
+
+Below SQE notes cover topics like - Junit, Hamcrest, AssertJ, Mockito, Test Doubles(Mock/Spy), stubbing techniques, Testing Async code, Integration Testing with Spring and DI frameworks, Mockmvc, Powermock.
+
+JUnit Assertions
+
+1) JUnit's fail-fast test failure mechanism  - As soon as a Junit test hits an assertion which fails, whole test case fails.
+2) Every assert statement can provide a message, that will be printed, whenever the assert fails.
+3) Junit assertions argument sequence (expected, actual)
+4) assertSame - This method expects that two same object references will be passed to the method. It checks the object reference using the == operator.
+5) assertNotSame - This method expects that two different object references will be passed to the method. 
+
+---
+
+Hamcrest Assertions
+
+1) Hamcrest Assertions Library allows us to create more complex and powerful assertions than Junit Assertions Library.
+2) Junit comes with a subset of Hamcrest called Hamcrest-core. Hamcrest is a transitive dependency of Junit.
+3) To use Hamcrest in our project, we need to explicitly include full version of Hamcrest (Hamcrest-all) in pom.xml.
+4) Once Hamcrest-all is included in pom.xml, we can exclude Hamcrest-core using <exclusions> tag.
+5) Hamcrest assertions argument sequence (actual, expected)
+6) Hamcrest offers a utility matcher class, org.hamcrest.CoreMatchers (an implementation of the org.hamcrest.Matcher interface), with an array of the static utility methods that can be used with Junit's assertThat method.
+7) assertThat() method is available in both JUnit and Hamcrest. Note that sequence of arguments expected and actual is reversed in these methods.
+8) It allows you to construct domain-specific language (DSL) like statements to combine assertions and make your tests such that they can be read nicely and intuitively.
+9) The real drawback of Hamcrest is the fact that your IDE will not help you much with code completion in order to pick the matchers that are acceptable for the current type of the passed argument. You need to find all of them yourself.
+
+10) Using Hamcrest matchers for assertions--
+
+// core matchers - comes with JUnit 4.9+
+assertThat(newPerson, allOf(notNullValue(),is(not(person))));
+assertThat(newPerson.getName(), both(startsWith("And")).and(endsWith("rew")));
+assertThat(newPerson.getSiblings(), hasItems(new Person("Amy", 20), new Person("Alex", 25)));
+
+// for more matchers attach org.hamcrest:hamcrest-all
+assertThat(newPerson.getAge(), greaterThan(25));
+assertThat(newPerson, hasProperty("name", equalTo("Andrew")));
+
+11) The following matchers are present in the core version of the Hamcrest library:
+
+CoreMatchers.allOf(...): This matcher checks whether all of the passed matcher's execution of the matches method result to true. An example of this matcher is given as follows:
+
+assertThat(newPerson, allOf(notNullValue(), is(not(person))));
+
+CoreMatchers.notNullValue(): This matcher checks if the asserted object is not null.
+
+CoreMatchers.is(...): This matcher adds syntactic sugar—does nothing but makes the code more intuitive to read.
+
+CoreMatchers.not(...): This matcher checks whether the asserted object is not equal to the given object.
+
+CoreMatchers.both(...).and(...): This matcher evaluates whether both of the passed matchers's execution of the matches method result to true. An example of this matcher is given as follows:
+
+assertThat(newPerson.getName(),both(startsWith("And")).and(endsWith("rew")));
+
+CoreMatchers.startsWith(...): This matcher checks if the passed string starts with the provided one.
+
+CoreMatchers.endsWith(...): This matcher checks if the passed string ends with the provided one.
+
+CoreMatchers.hasItems(...): This matcher evaluates whether the passed collection contains the passed items, as shown in the following code:
+
+assertThat(newPerson.getSiblings(), hasItems(new Person("Amy", 20), new Person("Alex", 25)));
+
+The following matchers are present in the additional Hamcrest libraries (all of them are there in hamcrest-all):
+
+OrderingComparison.greaterThan(...): This matcher evaluates whether the asserted comparable is greater than the passed item, as shown in the following code:
+
+assertThat(newPerson.getAge(), greaterThan(25));
+
+HasPropertyWithValue.hasProperty(...): This matcher finds the passed property on the asserted object and calls the passed matcher's logic on its value as follows:
+
+assertThat(newPerson, hasProperty("name", equalTo("Andrew")));
+
+CoreMatchers.equalTo(...): This matcher evaluates whether the asserted object is equal to the passed parameter. If neither are arrays, then the equals method is called to compare those objects. If they are arrays, then lengths and elements are checked for equality.
+
+
+12) Creating custom Hamcrest matchers --
+
+Remember, before you start writing your custom matcher, do not implement the Matcher interface. Instead, always extend the abstract BaseMatcher class or another class that has already implemented it.
+
+
+@SuppressWarnings("unchecked")
+@RunWith(MockitoJUnitRunner.class)
+public class NewPersonGeneratorTest {
+
+    @Mock NewIdentityCreator newIdentityCreator;
+
+    @InjectMocks NewPersonGenerator systemUnderTest;
+
+    @Test
+    public void should_return_person_with_new_identity() {
+        // given
+        Person person = new Person("Robert", 25, asList(new Person("John"), new Person("Maria")));
+        given(newIdentityCreator.createNewName(person)).willReturn("Andrew");
+        given(newIdentityCreator.createNewAge(person)).willReturn(45);
+        given(newIdentityCreator.createNewSiblings(person)).willReturn(asList(new Person("Amy", 20), new Person("Alejandro Gonzales", 25)));
+
+        // when
+        Person newPerson = systemUnderTest.generateNewIdentity(person);
+
+        // then
+        assertThat(newPerson, allOf(is(not(equalTo(person))),
+                                    hasNameEqualTo("Andrew"),
+                                    hasAgeGreaterThan(25),
+                                    containsSiblings(new Person("Amy", 20), new Person("Alejandro Gonzales", 25))));
+    }
+  
+}
+
+The class that contains the static methods that create Hamcrest matchers is shown in the following code:
+
+public class PersonMatchers {
+
+  public static Matcher hasNameEqualTo(final String name) {
+    return new BaseMatcher() {
+      @Override
+      public boolean matches(Object item) {
+        if (!(item instanceof Person)) {
+          return false;
+        }
+        Person person = (Person) item;
+        return bothNamesAreNull(person) || bothNamesMatch(person);
+      }
+
+      private boolean bothNamesMatch(Person person) {
+        return (name != null && name.equals(person.getName()));
+      }
+
+      private boolean bothNamesAreNull(Person person) {
+        return (name == null && person.getName() == null);
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("Name should be equal to ").appendValue(name);
+      }
+    };
+  }
+
+  public static Matcher<Person> hasAgeGreaterThan(final int age) {
+    return new TypeSafeMatcher<Person>() {
+      @Override
+      protected boolean matchesSafely(Person person) {
+        return person.getAge() > age;
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("Age should be greater than ").appendValue(age);
+      }
+    };
+  }
+
+  public static Matcher<Person> containsSiblings(final Person... siblings) {
+    return new TypeSafeDiagnosingMatcher<Person>() {
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("Person should have siblings ").appendValue(siblings);
+      }
+
+      @Override
+      protected boolean matchesSafely(Person person, Description mismatchDescription) {
+        if (!person.getSiblings().containsAll(Arrays.asList(siblings))) {
+          mismatchDescription.appendText("The person has size of siblings equal to ")
+              .appendValue(person.getSiblings().size())
+              .appendText(" and the person has siblings ")
+              .appendValue(person.getSiblings());
+          return false;
+        }
+        return true;
+      }
+    };
+  }
+}
+
+
+13) Using Hamcrest matchers for stubbing and verification--
+
+When you pass a matcher as an argument of the verified method, then behind the scenes, Mockito delegates it to the ArgumentMatcher class. The ArgumentMatcher class in turn extends Hamcrest's BaseMatcher.
+
+If method arguments are objects, just pass the Mockito.argThat(…) method as a stubbed/verified method parameter. If method arguments are primitives, pass the respective intThat(…) or booleanThat(…) method as a stubbed/verified method parameter.
+
+Pass Hamcrest matchers as arguments to the Mockito.argThat(…) method, regardless of the fact that you are stubbing or verifying methods.
+
+given(newIdentityCreator.createNewAge(argThat(hasAgeGreaterThan(30)))).willReturn(18);    
+
+The hasAgeGreaterThan(…) method is a custom Hamcrest matcher as shown in the following code:
+
+public static Matcher<Person> hasAgeGreaterThan(final int age) {
+    return new TypeSafeMatcher<Person>() {
+      @Override
+      protected boolean matchesSafely(Person person) {
+        return person.getAge() > age;
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("Age should be greater than ").appendValue(age);
+      }
+    };
+  }
+
+---
+
+AssertJ Assertions
+
+1) AssertJ works in a similar way to Hamcrest. A major difference is that AssertJ assertions can be concatenated.
+2) The core version of AssertJ contains more assertions than the core version of Hamcrest. Also, the IDE will help you with code completion since it's based on the fluent interface API.
+3) In most cases, all you need is assertj-core since it already has plenty of useful assertions.
+
+assertThat(newPerson).isNotNull().isNotEqualTo(person);
+assertThat(newPerson.getName()).isNotNull().startsWith("And").endsWith("rew");
+assertThat(newPerson.getSiblings()).contains(new Person("Amy", 20), new Person("Alex", 25));
+assertThat(newPerson.getAge()).isGreaterThan(25);
+// AssertJ also proves to be extremely powerful in terms of performing assertions over iterables 
+assertThat(newPerson.getSiblings()).extracting("name", "age").contains(tuple("Amy", 20), tuple("Alex", 25));
+
+4) From AssertJ version 1.6.0, you can make your tests look even more readable and follow the BDD naming by changing the assertThat(...) method into the then(...) method. You can rewrite the test to follow that approach, as shown
+
+then(newPerson).isNotNull().isNotEqualTo(person);
+then(newPerson.getName()).isNotNull().startsWith("And").endsWith("rew");
+then(newPerson.getSiblings()).contains(new Person("Amy", 20), new Person("Alex", 25));
+then(newPerson.getAge()).isGreaterThan(25);
+then(newPerson.getSiblings()).extracting("name", "age").contains(tuple("Amy", 20), tuple("Alex", 25));
+
+5) When you call Assertions.assertThat(T object), you can benefit from AssertJ's overloaded assertThat(…) methods that can be used with different types of classes. The examples of such classes are given as follows:
+
+public static BigDecimalAssert assertThat(BigDecimal actual);
+public static BooleanAssert assertThat(boolean actual);
+public static FileAssert assertThat(File actual);
+public static <T> ObjectAssert<T> assertThat(T actual);
+
+6) Due to the fact that AssertJ operates on overloaded methods that are always type-specific, your IDE will instantly help you find all of the matching assertion methods.
+
+The execution of the method assertThat(File actual) will return FileAssert that is file-specific and allows you to use such methods as follows (to mention only a few):
+
+exists(), isDirectory(), isRelative(), hasParent(...),hasExtension(...)
+
+7) Creating custom AssertJ assertions--
+
+a) Create a class that extends the AbstractAssert class, which takes two bounds of generics: one is the assertion's class and the other is the asserted object's class.
+
+public class PersonAssert extends AbstractAssert<PersonAssert, Person> {
+
+b) Implement a constructor that has two parameters: one that passes the actual object and the other that passes the assertion's class.
+
+  protected PersonAssert(Person actual) {
+        super(actual, PersonAssert.class);
+  }
+
+c) Define custom methods that perform assertions and return the assert itself (in order to construct a fluent iterable interface).
+
+  public PersonAssert hasNameEqualTo(String name) {
+        String actualName = actual.getName();
+        assertThat(actualName).isEqualTo(name);
+        return this;
+  }
+
+  public PersonAssert hasAgeGreaterThan(int age) {
+        int actualAge = actual.getAge();
+        assertThat(actualAge).isGreaterThan(age);
+        return this;
+  }
+
+  public PersonAssert containsSiblings(Person... siblings) {
+        List<Person> actualSiblings = actual.getSiblings();
+        assertThat(actualSiblings).contains(siblings);
+        return this;
+  }
+
+}
+
+d) Create a class that extends the Assertions class (in order to access core assertions). You will put your custom assertion factory method here.
+
+public class MyBddAssertions extends BDDAssertions {
+
+// e) Create an assertThat(T object)/then(T object) static factory method that will instantiate your custom assertion. 
+
+    public static PersonAssert then(Person actual) {
+        return new PersonAssert(actual);
+    }
+
+}
+
+f) Call your custom AssertJ assertion in the assertion phase of your test.
+
+then(newPerson).isNotEqualTo(person)
+                             .hasNameEqualTo("Andrew")
+                             .hasAgeGreaterThan(25)
+                             .containsSiblings(new Person("Amy"), new Person("Alejandro Gonzales"));
+
+---
+ 
+import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat; 
+
+---
+
+JUnit creates a new instance of the test class before invoking each @Test method. This helps provide independence between test methods and avoids unintentional side effects in the test code. Because each test method runs on a new test class instance, we can't reuse instance variable values across test methods.
+
+---
+
+@Before - When a non-static public void method of any name is annotated with @Before, then that method is executed prior to every test execution.
+@After - When any non-static public void method is annotated with @After, the method gets executed subsequent to every test method execution. 
+
+JUnit 4 defines two method-level annotations, @BeforeClass and @AfterClass, for public static methods. Being static, they get executed only once per test class. 
+
+@BeforeClass - Any public static void method annotated with @BeforeClass gets executed prior to the first test. 
+@AfterClass -  Any public static void method annotated with @AfterClass gets executed following the last test.
+
+---
+
+Due to the uncertainty in double computation, the Assert class doesn't rely on double comparison, hence the assertEquals(double expected, double actual) method has been deprecated.
+
+Alternatively, Assert offers an overloaded assertEquals method for double value assertion, which is assertEquals(double expected, double actual, double delta). The third argument, delta, is very important during double value comparison when the expected value doesn't match the actual value because if the difference between them is less than or equal to the delta value, the assertion is considered to be passed.
+
+For monetary calculations, never use double values; instead, use BigDecimal.
+
+---
+
+When using JUnit 4, we can simply use the expected attribute of the @Test annotation to declare that we expect an exception to be thrown anywhere in the annotated test method.
+
+As a result, when the test is run, it will fail if the specified exception isn't thrown and will pass if it's thrown:
+
+@Test(expected = NullPointerException.class)
+public void whenExceptionThrown_thenExpectationSatisfied() {
+    String test = null;
+    test.length();
+}
+
+In this example, we've declared that we're expecting our test code to result in a NullPointerException.
+
+This is enough if we're only interested in asserting that an exception is thrown.
+
+When we need to verify some other properties of the exception, we can use the ExpectedException rule.
+
+Let's see an example of verifying the message property of an exception:
+
+@Rule
+public ExpectedException exceptionRule = ExpectedException.none(); // Returns a rule that expects no exception to be thrown 
+
+@Test
+public void whenExceptionThrown_thenRuleIsApplied() {
+    exceptionRule.expect(NumberFormatException.class);
+    exceptionRule.expectMessage("For input string");
+    Integer.parseInt("1a");
+}
+
+In the example above, we're first declaring the ExpectedException rule. Then in our test, we're asserting that the code that attempts to parse an Integer value will result in a NumberFormatException with the message “For input string”.
+
+---
+
+Working with the @RunWith annotation
+
+Test runners perform JUnit test execution. The @RunWith annotation accepts a class name. The class should extend the org.junit.runner.Runner class. An example of a runner is JUnit4.class. This class is also known as the default JUnit 4 class runner.
+
+When we annotate a test class with @RunWith or extend a @RunWith class, during test execution, the built-in JUnit4 runner is ignored. Instead, JUnit uses the runner that it references in the @RunWith argument.
+
+A runner can change the characteristics of the test class; for example, a Spring runner enables Spring context initialization nature, or a Mockito runner initializes proxy objects annotated with the @Mock annotation.
+
+Suite is a standard runner that allows us to build a suite that contains tests from many packages. The following is an example of @RunWith:
+
+@RunWith(Suite.class)
+public class MySuite {
+   
+}
+
+---
+
+Working with test suites --
+
+
+A test suite groups and executes multiple tests. From Eclipse, we can run individual test classes, but to run multiple tests together, we need a test suite. To achieve this, JUnit 4 offers the Suite.class class and the @Suite.SuiteClasses annotation. This annotation accepts a comma-separated array of test classes.
+When we execute the TestSuite class, it in turn executes all the test classes passed to the @Suite.SuiteClasses annotation.
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+
+@RunWith(Suite.class)
+@Suite.SuiteClasses({ AssertTest.class, TestExecutionOrder.class,
+    Assumption.class })
+public class TestSuite {
+
+}
+
+---
+
+Working with junit.Assert.assertThat -- 
+
+The assertThat method was added to the Assert class to verify a result in a sophisticated way.
+
+  public static void assertThat(Object actual, Matcher matcher)
+  
+Object represents the value received, and Matcher is an implementation of the org.hamcrest.Matcher interface. 
+
+The assertEquals method compares the expected value with the actual value, and fails if the values do not match, whereas with a matcher, the assertThat method may either compare the object partially with the matcher or may look for an exact match. The Matcher interface offers an array of utility methods such as is, either, or, not, and hasItem for partial and exact matches. The Matcher methods follow the builder pattern to create a chain of commands. It can combine one or more matchers to build a composite matcher chain. A matcher can improve the readability of your tests.
+
+The following examples demonstrate the capabilities of Matcher and assertThat:
+
+assertThat(calculatedTax, is(not(thirtyPercent)) );
+assertThat(phdStudentList, hasItem(DrJohn) );
+assertThat(manchesterUnitedClub, both( is(EPL_Champion)).and(is(UEFA_Champions_League_Champion)) );
+
+Hamcrest offers a utility matcher class, org.hamcrest.CoreMatchers, with an array of the static-import utility methods. A few utility methods of CoreMatchers are allOf, anyOf, both, either, describedAs, everyItem, is, isA, anything, hasItem, hasItems, equalTo, any, instanceOf, not, nullValue, notNullValue, sameInstance, theInstance ,startsWith, endsWith, and containsString. These methods return a Matcher to build a chain of commands.
+
+a) compound matchers – either, both, anyOf, and allOf
+b) collection matchers – hasItem and hasItems
+c) string matchers – startsWith, endsWith, and containsString
+d) custom matchers - We can write a custom matcher that will work with the assertThat method
+
+---
+
+To create mocks using the @Mock annotation, we need to initialize the mocks before test execution, so use MockitoAnnotations.initMocks(this) before using the mocks, or use MockitoJUnitRunner as a JUnit runner.
+
+---
+
+Limitations of Mockito and PowerMockito as an alternative
+
+Mockito cannot mock or spy on Java constructs such as final classes and methods, static methods, enums, private methods, the equals() and hashCode() methods, primitive types, and anonymous classes.
+
+But the good news is that PowerMockito (an extension of the Mockito framework) API allows us to overcome the limitations of Mockito. It lets us mock static and private methods. You can also set expectations on new invocations for local or anonymous classes, private member classes, and inner classes but as per the design, you should not opt for mocking private or static properties because it violates the encapsulation. Instead, you should refactor the offending code to make it testable.
+
+---
+
+Stubbing -- 
+
+The following Mockito methods represent the course of action of the trigger during Stubbing:
+
+1) thenReturn(value to be returned): This returns a specific value.
+
+2) thenThrow(throwable to be thrown): This throws a specific exception.
+
+3) thenAnswer(Answer answer): Unlike returning a specific value, some logic is executed and an action is taken from that logic; for example, some value is computed and returned. Answer is an interface.
+
+4) thenCallRealMethod(): This calls the real method on the object. The real method doesn't return any default value. It performs the actual logic, but if it needs to invoke any method that is stubbed, then the stubbed value is passed to the real method; for example, the foo()method calls bar(), but bar() is stubbed to return a value 10, so foo() will get 10.
+
+---
+
+The following methods can be used in combination with verify:
+
+1) times(int wantedNumberOfInvocations) 
+2) never(): This is equivalent to times (0).
+3) atLeastOnce()
+4) atLeast(int minNumberOfInvocations)
+5) atMost(int maxNumberOfInvocations)
+6) only()
+7) timeout(int millis): This interacts in a specified time range.
+
+---
+
+Mockito Matchers (import static org.mockito.Matchers.*) --
+
+import static org.mockito.Matchers.isA;
+
+when(portfolio.getAvgPrice(isA(Stock.class))).thenReturn(new BigDecimal("10.00"));
+
+import static org.mockito.Matchers.eq;
+
+verify(portfolio).getAvgPrice(eq(noStock));
+
+---
+
+In Testing Spring applications, I have used Junit (4 and 5), Mockito, Hamcrest, JSONAssert etc., but what is Spring's TestContext framework ?
+
+Pom.xml dependencies for Spring Framework application
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+		</dependency>
+
+Pom.xml dependencies for Spring Testing
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+SpringRunner is an alias for the SpringJUnit4ClassRunner.
+
+Spring Unit Testing With Java Context
+
+// 2) Load the context
+@RunWith(SpringRunner.class)
+// 1) Point to the Context Configuration
+@ContextConfiguration(classes = SpringIn5StepsBasicApplication.class)
+public class BinarySearchTest {
+
+	// 3) Get this bean from the context
+	@Autowired
+	BinarySearchImpl binarySearch;
+
+	@Test
+	public void testBasicScenario() {
+		
+		// call method on binarySearch
+		int actualResult = binarySearch.binarySearch(new int[] {}, 5);
+
+		// check if the value is correct
+		assertEquals(3, actualResult);
+
+	}
+
+}
+
+Spring Unit Testing With XML Context
+
+//Load the context
+@RunWith(SpringRunner.class)
+@ContextConfiguration(locations="/testContext.xml")
+public class BinarySearchXMLConfigurationTest {
+
+	// Get this bean from the context
+	@Autowired
+	BinarySearchImpl binarySearch;
+
+	@Test
+	public void testBasicScenario() {
+		
+		// call method on binarySearch
+		int actualResult = binarySearch.binarySearch(new int[] {}, 5);
+
+		// check if the value is correct
+		assertEquals(3, actualResult);
+
+	}
+
+}
+
+Spring unit testing with Mockito
+
+When we write test cases with Mockito, we do not need Spring Context (@ContextConfiguration), 
+we just need MockitoJunitRunner (@RunWith(MockitoJunitRunner.class)).
+
+When using Mockito, you do not need to load entire Spring Context, that is why Mockito unit tests will be faster.
+Generally try to avoid loading Spring context for unit tests. However, when testing a Spring MVC application using MockMVC framework, we have to launch up Spring context.
+
+
+-----
+
+Spring's TestContext framework --
+
+Spring's TestContext framework is a generic, annotation-driven framework for unit and integration testing. The framework's resources are located in the org.springframework.test.context package. This framework believes in the design paradigm "convention over configuration," which means that the framework provides reasonable defaults for every configuration; the user can still override the unconventional aspects through annotation-based configuration. The TestContext framework provides support for JUnit and TestNG, such as a custom JUnit runner that allows non-invasive POJO test classes.
+
+The TestContext framework consists of two classes and three interfaces. 
+
+The following are the classes:
+
+1) TestContext: This class provides the context in which a test is executed. It also makes the context management and caching supports available for the test instance. To load the application context, the ContextLoader interface (or SmartContextLoader) is used.
+
+2) TestContextManager: This class is the main entry point to the TestContext framework; it manages a single TestContext class and publishes events to all registered TestExecutionListener implementations at test execution points. 
+
+These are the test execution points:
+
+1) In static before class methods
+2) In before test execution methods
+3) During test instance preparation
+4) In after test execution methods
+5) In static after class methods
+
+The following are the interfaces:
+
+1) TestExecutionListener: The TestContextManager class publishes events to all the registered listeners. This interface defines the listener API to react to the published events.
+
+The default TestExecutionListener implementations are registered in the following order:
+
+a) ServletTestExecutionListener: This listener provides the Servlet API mocks for WebApplicationContext
+
+b) DependencyInjectionTestExecutionListener: As the name suggests, this listener provides dependency injections for the test
+
+c) DirtiesContextTestExecutionListener: This listener checks the context—whether any bean is dirtied or not during a test execution; it also handles the @DirtiesContext annotation
+
+d) TransactionalTestExecutionListener: This provides transactional support
+
+e) SqlScriptsTestExecutionListener: This executes SQL scripts configured via the @Sql annotation
+
+Custom TestExecutionListener implementations can be registered for a test class and its subclasses via the @TestExecutionListeners annotation. If a custom TestExecutionListener implementation is registered via @TestExecutionListeners, the default listeners will not be registered. As a result, the developer has to manually declare all the default listeners in addition to any custom listeners.
+
+If a custom TestExecutionListener class is registered via @TestExecutionListeners, the default listeners will not be registered. This forces the developer to manually declare all default listeners in addition to any custom listeners. The following listing demonstrates this style of configuration:
+
+
+@ContextConfiguration
+@TestExecutionListeners({
+    SysOutTestExecutionListener.class,
+    ServletTestExecutionListener.class,
+    DependencyInjectionTestExecutionListener.class,
+    DirtiesContextTestExecutionListener.class,
+    TransactionalTestExecutionListener.class,
+    SqlScriptsTestExecutionListener.class
+
+
+2) ContextLoader: This interface loads ApplicationContext for the Spring integration tests.
+
+3) SmartContextLoader: This interface is the extension of the ContextLoader interface and has been introduced in Spring 3.1. A SmartContextLoader interface processes resource locations, annotated classes, or context initializers. Also, it can set active bean profiles (@ActiveProfiles) and property sources in the context that it loads.
+
+
+----
+
+What the difference is between JUnit 4's @before and @after and the TestExecutionListener methods? 
+
+1) The answer is you can access TestContext in the TestExecutionListener methods but not in JUnit annotated methods and 
+2) TestExecutionListener logic can be shared with many tests but JUnit annotations are test class specific. For example, our SysOutTestExecutionListener logic can be shared with any test class; but if we annotate a test method with a JUnit 4 annotation, then that method cannot be shared with all the test classes unless they extend the class.
+
+----
+
+Spring Profiles
+
+If we define a system property, spring.profiles.active, or annotate a test class with @ActiveProfiles and set the active profile names, Spring loads the beans from the context where the profile name matches or no profile name is defined. We can create different beans depending on the profile name using an XML configuration or the @Profile annotation.
+
+----
+
+Mocking an environment
+
+1) Define a Spring configuration context by annotating a class with the @Configuration annotation. The @PropertySource annotation takes the properties' filenames and sets the properties to the Environment resource. 
+
+@Configuration
+@PropertySource({"classpath:myProp.properties"})
+public class MyConfig {
+
+  @Resource
+  private Environment environment;
+  
+  @Bean(name="message")
+    public String getMessage() {
+    return new environment.getProperty("message");
+    }
+}
+
+2) Create a test class to load the message bean from the application context and assert the bean value.
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(classes=MyConfig.class)
+public class EnvironmentTest {
+
+  @Autowired
+  ApplicationContext context;
+  
+  @Test
+  public void environment() throws Exception {
+    assertEquals("I'm the king", context.getBean("message"));
+  }
+}
+
+3) We can also mock out the properties file value with MockEnvironment and MockPropertySource.
+To mock the Environment value, we need to change the application context's Environment value (using MockEnvironment) at the time of context initialization. 
+we can use MockPropertySource with a mock value to mock out the properties file values. 
+
+The @ContextConfiguration annotation takes a ApplicationContextInitializer instance for explicit initialization; we can create a ApplicationContextInitializer instance and change the Environment value of ApplicationContext with a MockEnvironment object.
+
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(classes=MyConfig.class, initializers
+        = EnvironmentTest.MockPropertyInitializer.class)
+public class EnvironmentTest {
+
+  @Autowired
+  ApplicationContext context;
+  @Test
+  public void environment() throws Exception {
+    assertEquals("I'm the king", 
+          context.getBean("message"));
+  }
+  
+  public static class MockPropertyInitializer implements 
+        ApplicationContextInitializer
+          <ConfigurableApplicationContext> {
+
+      @Override
+      public void initialize(ConfigurableApplicationContext 
+          applicationContext) { ...........
+
+----
+
+Mocking the JNDI lookup
+
+Sometimes, we need to mock the <jee:jndi-lookup>/JNDI lookup with a mock value in the out-of-container tests. The org.springframework.mock.jndi package contains an implementation of the JNDI SPI, which you can use to set up a simple JNDI environment for test suites or standalone applications. we'll define <jee:jndi-lookup> for the DataSource resource in applicationContext and mock out the lookup from the test. 
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:com/packt/jndi/applicationContext.xml", 
+    initializers = 
+       DataSourceTest.MockJeeLookUpInitializer.class)
+public class DataSourceTest {
+
+  @Autowired
+  ApplicationContext context;
+
+  @Test
+  public void jndiResource() throws Exception {
+    assertNotNull(context.getBean("common-Datasource"));
+  }
+
+  public static class MockJeeLookUpInitializer implements
+        ApplicationContextInitializer
+          <ConfigurableApplicationContext> {
+
+  @Override
+  public void initialize(
+    ConfigurableApplicationContext applicationContext) { ...........
+
+----
+
+Using ReflectionTestUtils
+
+The org.springframework.test.util package contains ReflectionTestUtils, which is a collection of reflection-based utility methods to set a non-public field or invoke a private/protected setter method when testing the application code.
+
+public class ReflectionUtilsTest {
+
+  @Test
+  public void private_field_access() throws Exception {
+
+    Secret myClass = new Secret();
+    myClass.initiate("aio");
+    Field secretField = ReflectionUtils.findField(Secret.class, "secret", String.class);
+    assertNotNull(secretField);
+    ReflectionUtils.makeAccessible(secretField);
+    assertEquals("zko", ReflectionUtils.getField(secretField, myClass));
+    ReflectionUtils.setField(secretField, myClass, "cool");
+    assertEquals("cool", ReflectionUtils.getField(secretField, myClass));
+
+  }
+}
+
+First, it finds the secret field and makes it accessible; then, it calls the getField method to access the private field value, and finally the setField method is called to set a new value to the private field.
+
+----
+
+Useful annotations in Spring Testing
+
+The Spring Framework provides a set of Spring-specific annotations for unit and integration tests in conjunction with the TestContext framework.
+
+1) @ContextConfiguration - This annotation is used to determine how to load and configure an ApplicationContext for tests. @ContextConfiguration declares the application context's resource locations or the annotated classes (@Configuration) that will be used to load the context.
+
+2) @WebAppConfiguration: This class-level annotation is used to instruct the Spring context that the ApplicationContext loaded using the @ContextConfiguration annotation is a WebApplicationContext.
+
+3) @ActiveProfiles: This class-level annotation is used to instruct the bean container about which bean definition profiles should be active during application context loading. 
+
+4) @TestPropertySource: This class-level annotation is used to configure the locations of the properties files and the inline properties to be added to the set of PropertySources of Environment during ApplicationContext loading. 
+
+5) @DirtiesContext: This annotation specifies that the ApplicationContext has been dirtied during the execution of a test (such as, it changed the state of a singleton bean) and should be closed. When an application context is dirtied, it is removed from the testing framework's cache and closed. This annotation can be used as both a class- and method-level within the same test class.
+
+6) @Timed: This method-level annotation indicates that the annotated test method must finish execution in a specified time period (in milliseconds).
+
+7) @Repeat: This method-level annotation indicates that the test method must be executed repeatedly. 
+
+----
+
+Mocking request and session scope beans
+
+We can mock the request and session scope beans with MockHttpServletRequest and MockHttpSession. We can unit test the MVC application with MockHttpServletRequest, MockHttpSession, and ModelAndViewAssert.
+
+The loginService bean is defined in the request scope, and its properties are set from the request parameters using the p namespace. The loginDetails bean is defined in the session scope, and its constructor arguments are set from the session attributes using the c namespace.
+
+How can we get the session and request scoped beans in our JUnit test and set the request and session attributes? 
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations ="classpath:beans.xml")
+@WebAppConfiguration
+public class LoginControllerTest {
+  @Autowired
+  private LoginService loginService;
+  @Autowired
+  private LoginDetails loginDetails;
+  @Autowired 
+  MockHttpServletRequest request;
+  @Autowired 
+  MockHttpSession session;
+
+  @Test
+  public void requestScope() throws Exception {
+    request.setParameter("userId", "rock");
+    request.setParameter("password", "rock");
+        
+    assertTrue(loginService.isValid());
+  }
+  
+  @Test
+  public void sessionScope() throws Exception {
+     Date now = new Date();
+     session.setAttribute("userId", "john");
+     session.setAttribute("loggedInTime", now);
+        
+     assertEquals("john",loginDetails.getUser());
+     assertEquals(now,loginDetails.getLoginTime());
+  }
+}
+
+We loaded a WebApplicationContext for our test by annotating the test class with @WebAppConfiguration.
+
+We injected the mock request or session into our test instance and prepared test data as appropriate, such as setting the request parameters and session attributes.
+
+We invoked the web components (loginService and loginDetails) from the configured WebApplicationContext via dependency injections, and asserted the values against the mocks.
+
+---
+
+Mocking the servlet container with MockMvc (Spring MVC test)
+
+The design behind the Spring MVC test is to test the controller by performing actual requests and generating responses, as they would be at runtime. MockMvc is used to mock the servlet container, and it can perform a request and verify the resulting response status and response elements.
+
+Let us consider a controller to return a specific employee and all employees with /employees/{id} and /employees/ urls.
+
+We can write test cases for controller using mockMVC as below -
+
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations ="classpath:beans.xml")
+@WebAppConfiguration
+public class HRControllerTest {
+  @Autowired
+    private WebApplicationContext wac;
+    private MockMvc mockMvc;
+
+    @Before  public void setup() {
+        this.mockMvc = 
+        MockMvcBuilders.webAppContextSetup
+             (this.wac).build();
+    }
+
+    @Test public void getEmployee() throws Exception {
+    this.mockMvc.perform(get("/employees/1").
+    accept(MediaType.parseMediaType(
+        "application/json;charset=UTF-8")))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(
+                "application/json;charset=UTF-8"))
+            .andExpect(jsonPath("$.name").value("John
+                 Doe"))
+            .andExpect(jsonPath("$.salary").value(100.00))
+            .andExpect(jsonPath("$.id").value(1));
+    }
+}
+
+The MockMvcBuilders class needs a WebApplicationContext to build a MockMvc object; the WebApplicationContext is autowired using the @WebAppConfiguration annotation.  Here, we bypassed the servlet container with MockMvc to test the real request/response handling.
+
+Important classes in MockMVC
+
+org.springframework.test.web.servlet.MockMvc, 
+org.springframework.test.web.servlet.request.MockMvcRequestBuilders, and
+org.springframework.test.web.servlet.result.MockMvcResultMatchers classes
+
+
+---
+
+Handling transactions in Spring tests
+
+We can perform real Spring integration testing and transaction management with the @Transactional, @TransactionConfiguration, and @Rollback annotations.
+
+Spring provides a module/utility library for integration tests. The following are the steps to write JUnit tests using the Spring transaction management API and SpringJUnit4ClassRunner.
+
+1) Consider that We have defined a dataSourceBean bean with driverClassName, url, and username. The dataSourceBean reference is passed to the jdbcTemplateBean and transactionManagerBean beans (integration.xml file).
+
+2) Spring supports automatic transaction rollback after test execution. It helps us to shield the development database from getting corrupted. A transaction manager bean reference is required to set the test runner before test execution. SpringJUnit4ClassRunner handles the integration tests.
+
+@ContextConfiguration({ "classpath:integration.xml" })
+@TransactionConfiguration(transactionManager = "transactionManagerBean", defaultRollback = true)
+@Transactional
+@RunWith(SpringJUnit4ClassRunner.class)
+public class PhoneBookDerbySpringDaoIntegrationTest {
+
+  @Autowired
+  JdbcTemplate jdbc;
+
+  PhoneBookDerbySpringDao dao;
+
+  @Before
+  public void init() {
+    dao = new PhoneBookDerbySpringDao(jdbc);
+  }
+
+  @Test
+  public void integration() throws Exception {
+    PhoneEntry entry = newEntry("12345", "Mark", "Smith");
+
+    //test create
+    assertTrue(dao.create(entry));
+
+    //check retrieval
+    List<PhoneEntry> phoneEntries = 
+        dao.searchByFirstName("Mark");
+
+    //check creation
+    assertFalse(phoneEntries.isEmpty());
+
+    //update last name
+    entry.setLastName("Boucher");
+
+    //update the entry
+    assertTrue(dao.update(entry));
+
+    //retrieve the entry by first name
+    phoneEntries = dao.searchByFirstName("Mark");
+
+    //verify Mark Boucher exists
+    assertFalse(phoneEntries.isEmpty());
+    assertEquals("Boucher", 
+        phoneEntries.get(0).getLastName());
+
+    //delete Mark Boucher from Phonebook
+    dao.delete(entry.getPhoneNumber());
+
+    //retrieve entry with first name Mark
+    phoneEntries = dao.searchByFirstName("Mark");
+
+    //verify that Mark was deleted
+    assertTrue(phoneEntries.isEmpty());
+  }
+
+
+3) The @ContextConfiguration({ "classpath:integration.xml" }) annotation instructs the JUnit runner to load Spring beans from a classpath location. It will load three beans from the integration.xml file.
+
+4) The class-level @Transactional annotation makes all methods transactional.
+
+5) The @TransactionConfiguration(transactionManager = "transactionManagerBean", defaultRollback = true) annotation defines the transaction manager, and the defaultRollback attribute tells the transaction manager to roll back all transactions at the end of a given test.
+
+The following things occur in sequence when the JUnit test is run:
+
+a) Spring beans are loaded from the integration.xml file.
+
+b) A transaction manager is configured to roll back all transactions.
+
+c) The jdbcTemplateBean bean is wired to the test class member jdbc.
+
+d) The init method creates a new instance of the PhoneBookDerbySpringDao class and passes jdbc to dao.
+
+e) The test gets executed and in turn it creates, updates, and deletes PhoneEntry.
+
+f) After test execution, the transaction manager rolls back the transaction. No data is created, updated, or deleted in the PhoneBook table.
+
+
+
+----
+
+
+Integration Testing with Mockito and DI Frameworks
+
+1) The idea behind integration tests with DI frameworks is that we want the application to have its dependencies already instantiated and injected. 
+2) We may have fragments of code where we want to send or retrieve data via a web service or a system where a connection to another server is necessary. When performing integration testing, we do not want to have such connections set. Since integration tests are run from our local machines, we want to limit the need for configuring access to those external servers.
+3) We can create mocks of our dependencies in order to stub the call and to verify that we made that call only once (let's assume that we pay a lot of money for each call, thus we want to be sure that those method executions do not happen too often). We will play around with two most famous and widely used DI frameworks— Spring (Springockito) and Guice (Jukito).
+
+Injecting test doubles(mock/spy) instead of beans using Spring's code configuration
+
+Let's assume that we have an annotation-based configuration, as shown in the following code:
+
+// Actual main configuration class
+
+@Configuration
+class TaxConfiguration {
+
+    @Bean
+    public TaxService taxService() {
+        return new TaxService();
+    }
+
+    @Bean
+    public TaxTransferer taxTransferer(TaxService taxService) {
+        return new TaxTransferer(taxService);
+    }
+
+}
+
+// Bean to be mocked 
+class TaxService {
+
+    public void transferTaxFor(Person person) {
+        System.out.printf("Calling external web service for person with name [%s]%n", person.getName());
+    }
+
+}
+
+In order to perform an integration test of the system and replace the bean with a mock, you have to perform the following steps:
+
+1) Create a new configuration for test using MockTaxConfiguration and Override the existing beans (method names have to match) that you want to mock with @Bean methods that return a mock or a spy.
+
+@Configuration
+class MockTaxConfiguration {
+
+    @Bean
+    public TaxService taxService() {
+        return Mockito.mock(TaxService.class);
+    }
+
+}
+
+There might be cases where you do want your component to perform real logic. However, you want to confirm that a particular method was executed. Let's imagine a business case where you want to ensure that a particular web service method was called. In that case, you should return a spy instead of a mock by using return Mockito.spy(new TaxService());.
+
+In the integration test example, we had a single test and we didn't explicitly stub the mock's methods. If we had several tests, we most probably would like to stub the mock's behavior in a different manner in each test.
+
+Remember that since such a created mock is a singleton bean, then once stubbed it will be reused in all of your tests that use the same configuration. To change that behavior, you would have to reset the mock by calling Mockito.reset(mock1, mock2…mockn) and then stub the mock again.
+
+Actual Test Case --
+
+@RunWith(SpringJUnit4ClassRunner.class)
+// By providing the context configuration with the production and test configuration, we are overriding the initial bean definition as follows (note that method names have to match)
+@ContextConfiguration(classes = {TaxConfiguration.class, MockTaxConfiguration.class})
+public class TaxTransfererCodeConfigurationTest {
+
+    @Autowired TaxTransferer taxTransferer;
+
+    @Autowired TaxService taxService;
+
+    @Test
+    public void should_transfer_tax_for_person() {
+        // given
+        Person person = new Person();
+
+        // when
+        boolean transferSuccessful = taxTransferer.transferTaxFor(person);
+
+        // then
+        then(transferSuccessful).isTrue();
+        verify(taxService).transferTaxFor(person);
+    }
+
+}
+
+We can also replace an existing bean with a test double(mock/spy) using Spring's XML configuration.
+
+Below approachs can also be used:
+
+1) Injecting test doubles instead of beans using Springockito
+2) Injecting test doubles instead of beans with Guice
+3) Injecting test doubles instead of beans with Guice using Jukito
+
+In Spring Boot, @TestConfiguration annotation can be used to define/override beans for unit tests.
+
+@TestConfiguration
+public class MyTestConfig {
+  @Bean
+  public HelloService helloService(){
+      return new HelloService() {
+          @Override
+          public String getMessage(String name) {
+              return "Test hello: "+name;
+          }
+      };
+  }
+}
+
+and then import MyTestConfig class in the test class.
+
+@RunWith(SpringRunner.class)
+@SpringBootTest
+@Import(MyTestConfig.class)
+public class MyHelloProcessorTest { ...... }
+
+If we do not import custom test configuration, @SpringBootTest uses actual application context for bean HelloService.
+
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class MyHelloProcessorTest2 { ...... }
+
+
+Following example shows how to use @TestConfiguration in a static nested class inside a test class. In that case, we don't have to import it explicitly in enclosing class.
+
+
+@TestConfiguration
+static class MyTestConfig {
+	@Bean
+	public HelloService helloService() {
+		return new HelloService() {
+			@Override
+			public String getMessage(String name) {
+				return "Test hello: " + name;
+			}
+		};
+	}
+}
+
+---
+
+The ArgumentCaptor class is a Mockito class and it allows you to capture the argument passed to a stubbed method of a mock/proxy object.
+ArgumentCaptor capture method checks whether the arguments are passed to the JDBC API in the correct order or not, that is, the name is not passed for the password and so on.  
+
+---
+
+Mockito
+
+1) You are able to mock both interfaces and classes with Mockito.
+2) There is no expectation phase for Mockito—you can either stub or verify the mock's behavior.
+3) You can produce little boilerplate code while working with Mockito by means of annotations. For Example - MockitoAnnotations.initMocks(...) is not required with MockitoJUnitRunner.
+4) Test doubles is an object that is used only for testing purposes, instead of a real object. 
+5) Dummy, Fake, Stub, Mock and Spy are different types of test doubles.
+6) With Mockito's BDDMockito and AssertJ's BDDAssertions static methods to make the code even more readable and intuitive (Behavior Driven Development).
+
+@RunWith(MockitoJUnitRunner.class)
+public class MeanTaxFactorCalculatorTest {
+
+    static final double TAX_FACTOR = 10;
+
+    @Mock TaxService taxService;
+
+    @InjectMocks MeanTaxFactorCalculator systemUnderTest;
+	
+	// Using BDDMockito.given(...) and AssertJ's BDDAssertions.then(...) static methods
+    @Test
+    public void should_calculate_mean_tax_factor() {
+        // given
+        given(taxService.getCurrentTaxFactorFor(any(Person.class))).willReturn(TAX_FACTOR);
+
+        // when
+        double meanTaxFactor = systemUnderTest.calculateMeanTaxFactorFor(new Person());
+
+        // then
+        then(meanTaxFactor).isEqualTo(TAX_FACTOR);
+    }
+
+}
+
+7) Mockito has its own test runner implementation (MockitoJUnitRunner) that allows you to reduce boilerplate in order to create test doubles (mocks and spies) and to inject them (either via constructors, setters, or reflection) into the defined object.
+8) You can profit from Mockito's annotations to make your code look neat and to reduce the boilerplate code in your application.
+9) You may have a situation where your test class has already been annotated with a @RunWith annotation and, seemingly, you may not profit from Mockito's annotations. In order to achieve this, you have to call the MockitoAnnotations.initMocks method manually in the @Before annotated method of your test.
+
+@RunWith(SpringJUnit4ClassRunner.class)
+public class MeanTaxFactorCalculatorTest {
+
+    static final double TAX_FACTOR = 10;
+
+    @Mock TaxService taxService;
+
+    @InjectMocks MeanTaxFactorCalculator systemUnderTest;
+
+    @Before
+    public void setup() {
+        MockitoAnnotations.initMocks(this);
+    }
+
+    @Test
+    public void should_calculate_mean_tax_factor() {
+        // given
+        given(taxService.getCurrentTaxFactorFor(Mockito.any(Person.class))).willReturn(TAX_FACTOR);
+
+        // when
+        double meanTaxFactor = systemUnderTest.calculateMeanTaxFactorFor(new Person());
+
+        // then
+        then(meanTaxFactor).isEqualTo(TAX_FACTOR);
+    }
+
+}
+
+In above situation you can also use MockitoRule as below - 
+
+	// Creating new rule with recommended Strictness setting
+	// Mockito JUnit Rule helps keeping tests clean. It initializes mocks, validates usage and detects incorrect stubbing.
+	// Make sure to configure your rule with strictness(Strictness) which automatically detects stubbing argument mismatches and is planned to be the default in Mockito v3.
+	
+     @Rule public MockitoRule rule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+
+
+@RunWith(SpringJUnit4ClassRunner.class)
+public class MeanTaxFactorCalculatorTest {
+
+	@Rule public MockitoRule rule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
+    
+	static final double TAX_FACTOR = 10;
+
+    @Mock TaxService taxService;
+
+    @InjectMocks MeanTaxFactorCalculator systemUnderTest;
+	
+	// With MockitoRule, below method is not required in order to use Mockito annotations.
+	/*@Before
+    public void setup() {
+        MockitoAnnotations.initMocks(this);
+    }*/
+
+    @Test
+    public void should_calculate_mean_tax_factor() {
+        // given
+        given(taxService.getCurrentTaxFactorFor(Mockito.any(Person.class))).willReturn(TAX_FACTOR);
+
+        // when
+        double meanTaxFactor = systemUnderTest.calculateMeanTaxFactorFor(new Person());
+
+        // then
+        then(meanTaxFactor).isEqualTo(TAX_FACTOR);
+    }
+
+}
+
+10) When a JUnit test fails, an exception is thrown and a message is presented. Sometimes, it is enough to find a reason for this mistake and to find the solution. Mockito, however, goes a step further and tries to help the developer by giving him additional hints regarding the state of the stubbed methods.
+We can achieve this by annotating your JUnit test with @RunWith(VerboseMockitoJUnitRunner.class).
+
+11) We can also see additional Mockito warnings when test fails by using @RunWith(ConsoleSpammingMockitoJUnitRunner.class).
+
+---
+
+Overloaded versions of the Mockito.mock method:
+
+a) mock(Class<T> classToMock): This method creates a mock of a given class with a default answer set to returning default values (if not overriden by a custom Mockito configuration).
+
+b) mock(Class<T> classToMock, String name): This method creates a mock of a given class with a default answer set to returning default values. It also sets a name to the mock. This name is present in all verification messages. That's very useful in debugging, since it allows you to distinguish the mocks.
+
+c) mock(Class<T> classToMock, Answer defaultAnswer): This method creates a mock of a given class with a default answer set to the one passed as the method's argument. In other words, all of the nonstubbed mock's method will act as defined in the passed answer.
+
+d) mock(Class<T> classToMock, MockSettings mockSettings): This method creates a mock of a given class with customizable mock settings. You should hardly ever need to use that feature.
+
+---
+
+Creating mocks with a different default answer (Creating a custom Mockito configuration):
+
+Why would you want to create a custom answer anyway? 
+
+a) It is possible that for debugging purposes, you would like to log the arguments that were passed to the stubbed method
+
+b) You could also want to perform some more complex logic on the passed argument rather than just return some fixed value
+
+c) You want to stub asynchronous methods that have callbacks (you provide those callbacks in the custom Answer implementation)
+
+
+The following snippet shows an example of a test that uses the ThrowsExceptionClass answer set on a mock as its default answer:
+
+
+public class MeanTaxFactorCalculatorTest {
+  
+  TaxService taxService = mock(TaxService.class, new ThrowsExceptionClass(IllegalStateException.class));
+
+  MeanTaxFactorCalculator systemUnderTest = new MeanTaxFactorCalculator(taxService);
+
+  @Test
+  public void should_throw_exception_when_calculating_mean_tax_factor() {
+    // expect
+    try {      
+      systemUnderTest.calculateMeanTaxFactorFor(new Person());
+      fail("Should throw exception");
+    } catch (IllegalStateException exception) {}
+  }
+  
+}
+
+
+Mockito Answer implementations together with a short description:
+ 
+You can find the following answers in the AdditionalAnswers class -
+
+returnsFirstArg: This answer will return the first argument of the invocation
+returnsSecondArg: This answer returns the second argument of the invocation
+returnsLastArg: This answer returns the last argument of the invocation
+returnsArgAt: This answer returns the argument of the invocation provided at the given index
+delegatesTo: This answer delegates all methods to the delegate
+returnsElementsOf: This answer returns the elements of the provided collection
+
+There is also the Mockito class itself that contains some Answer interface implementations (they are static final fields, thus their names are in uppercase). These are RETURNS_DEFAULT, RETURNS_SMART_NULLS, RETURNS_MOCKS, RETURNS_DEEP_STUBS, and CALLS_REAL_METHODS; they all delegate to answers described below -
+
+Returns: It always returns the object passed in the constructor of this Answer implementation.
+ReturnsEmptyValues: This is default Answer for mock() method.
+ReturnsMoreEmptyValues: 
+ReturnsSmartNulls: If a NullPointerException gets thrown on mock, Mockito catches it and rethrows SmartNullPointerException with additional helpful messages. Additionally, it acts like ReturnsMoreEmptyValues.
+DoesNothing: This method always returns null for objects (non-primitive types) and default values for primitives.
+CallsRealMethods: This method creates a partial mock by default, unstubbed methods delegate to real implementations.
+ReturnsArgumentAt: This method returns an argument at a specified position of an array (for -1, it returns its last element).
+ReturnsElementsOf: This method keeps returning subsequent elements of the collection that is passed in the constructor. Once it arrives at the tail of the collection, it will always return that value.
+ReturnsDeepStubs: This method allows easy nested mock creation and method chain stubbing. 
+ThrowsExceptionClass: This method throws the exception passed as the argument to the constructor of Answer for each method. Mockito will instantiate the exception for you.
+ThrowsException: This method throws an instantiated exception passed to the constructor of Answer.
+ReturnsMocks: First, this method tries to return values such as the ones defined in ReturnsMoreEmptyValues and, if that fails, it tries to return a mock. Eventually, if this attempt fails at either of them, ReturnsMocks returns null. Please think twice before using this answer (or use it only to refactor some legacy code), since it clearly means that something is wrong with your design.
+
+
+Example using ThrowsExceptionClass --
+
+public class MeanTaxFactorCalculatorTest {
+  
+  TaxService taxService = mock(TaxService.class, new ThrowsExceptionClass(IllegalStateException.class));
+
+  MeanTaxFactorCalculator systemUnderTest = new MeanTaxFactorCalculator(taxService);
+
+  @Test
+  public void should_throw_exception_when_calculating_mean_tax_factor() {
+    // expect
+    try {      
+      systemUnderTest.calculateMeanTaxFactorFor(new Person());
+      fail("Should throw exception");
+    } catch (IllegalStateException exception) {}
+  }
+  
+}
+
+
+If you feel that none of these answers satisfy your requirements, you have to create your own implementation of the Answer interface.
+
+---
+
+Creating mocks with different default answers with annotations:
+
+If you want to pass a nondefault answer to the @Mock annotated field you have to set the answer property with a proper value of the Answers enum on the @Mock annotation.
+
+@RunWith(MockitoJUnitRunner.class)
+public class TaxFactorInformationProviderTest {
+
+    @Mock(answer = Answers.RETURNS_SMART_NULLS) TaxService taxService;
+
+    @InjectMocks TaxFactorInformationProvider systemUnderTest;
+
+    @Test
+    public void should_calculate_mean_tax_factor() {
+        // when
+        String parsedIrsAddress = systemUnderTest.formatIrsAddress(new Person());
+
+        // then
+        then(parsedIrsAddress).isEqualTo("IRS:[]");
+    }
+
+}
+
+---
+
+Mockito best practices - 
+
+1) Test behavior not the implementation - While writing test cases, test behavior and not the implementation so that, we don't have to refactor the test code with changes in the production code.
+
+---
+
+Refer to mock static/private methods and constructors with PowerMock - https://github.com/in28minutes/MockitoTutorialForBeginners
+
+Creating mocks of final classes with PowerMock:
+
+1) PowerMock is an extremely powerful tool and the very need to use it suggests that something may really be wrong with your code. The best outcome of using this library would be to use it as means to refactor the bad code and, at the end of the day, remove the PowerMock dependency from the system since it is no longer needed.
+
+Let us assume TaxService to be a final class which is referenced inside class TaxFactorCalculator. 
+
+public class TaxFactorCalculator {
+
+    public static final double INVALID_TAX_FACTOR = -1;
+
+    private final TaxService taxService;
+
+    public TaxFactorCalculator(TaxService taxService) {
+        this.taxService = taxService;
+    }
+
+    public double calculateTaxFactorFor(Person person) {
+        try {
+            return taxService.calculateTaxFactorFor(person);
+        } catch (Exception e) {
+            System.err.printf("Exception [%s] occurred while trying to calculate tax for person [%s]%n", e, person.getName());
+            return INVALID_TAX_FACTOR;
+        }
+    }
+}
+
+To use PowerMock with JUnit, you have to perform the following steps:
+
+a) Annotate your test class with @RunWith(PowerMockRunner.class).
+
+b) Provide all the classes that need to be prepared for testing (most likely bytecode manipulated) in the @PrepareForTest annotation (in the case of our scenario, it would be @PrepareForTest(TaxService.class) since TaxService is a final class). 
+In general, classes that need to be prepared for testing will include classes with final, private, static or native methods; classes that are final and that should be mocked; and also classes that should be returned as mocks on instantiation.
+
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(TaxService.class)
+public class TaxFactorCalculatorTest {
+
+    static final double TAX_FACTOR = 10000;
+
+    @Mock TaxService taxService;
+
+    @InjectMocks TaxFactorCalculator systemUnderTest;
+
+    @Test
+    public void should_calculate_tax_factor() {
+        // given
+        given(taxService.calculateTaxFactorFor(Mockito.any(Person.class))).willReturn(TAX_FACTOR);
+
+        // when
+        double taxFactorForPerson = systemUnderTest.calculateTaxFactorFor(new Person());
+
+        // then
+        then(taxFactorForPerson).isEqualTo(TAX_FACTOR);
+    }
+    
+}
+
+---
+
+Creating mocks of enums with PowerMock:
+
+Let's assume that we have the following enum containing business logic:
+
+public enum Country implements TaxRateCalculator {
+    POLAND {
+        @Override
+        public double calculateTaxFactorFor(Person person) {
+            return new PolishWebService().doLongOperation(person);
+        }
+    },
+    OTHER {
+        @Override
+        public double calculateTaxFactorFor(Person person) {
+            return new OtherWebService().doLongOperation(person);
+        }
+    };
+
+    public static Country fromCountryName(String countryName){
+        if(POLAND.name().equalsIgnoreCase(countryName)){
+            return POLAND;
+        }
+        return OTHER;
+    }
+}
+
+
+public class TaxFactorCalculator {
+
+    public static final double INVALID_TAX_FACTOR = -1;
+
+    public double calculateTaxFactorFor(Person person) {
+        Country country = Country.fromCountryName(person.getCountryName());
+        try {
+            return country.calculateTaxFactorFor(person);
+        } catch (Exception e) {
+            System.err.printf("Exception [%s] occurred while trying to calculate tax for person [%s]%n", e, person.getName());
+            return INVALID_TAX_FACTOR;
+        }
+    }
+
+}
+
+
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(Country.class)
+public class TaxFactorCalculatorTest {
+
+    static final double TAX_FACTOR = 10000;
+
+    @Mock Country country;
+
+    @InjectMocks TaxFactorCalculator systemUnderTest;
+
+    @Test
+    public void should_calculate_tax_factor() {
+        // given
+        mockStatic(Country.class); // Since fromCountryName is a static method
+        given(Country.fromCountryName(anyString())).willReturn(country);
+        given(country.calculateTaxFactorFor(any(Person.class))).willReturn(TAX_FACTOR);
+
+        // when
+        double taxFactorForPerson = systemUnderTest.calculateTaxFactorFor(new Person());
+
+        // then
+        then(taxFactorForPerson).isEqualTo(TAX_FACTOR);
+    }
+
+}
+
+---
+
+Creating Spies and Partial Mocks
+
+1) In general, you should use neither spies nor partial mocks in a well-designed code base. If you do use them, it most likely means that you are violating the S in the SOLID principles. You should have very legitimate reasons to use a spy in your code, otherwise it most likely signifies that there is something wrong with your code's design.
+(S) Single responsibility principle: A class should have only a single responsibility. In other words, your class should be dedicated to doing only one thing and should have only one reason to change.
+
+2) Creating spies in code without annotations --
+
+TaxService taxService = spy(new TaxService());
+
+Mockito internally runs the following when you execute the static spy method:
+
+public static <T> T spy(T object) {
+        return mock((Class<T>) object.getClass(), withSettings()
+                .spiedInstance(object)
+                .defaultAnswer(CALLS_REAL_METHODS));
+   }
+
+You can see that a spy is in fact a mock that by default calls real methods. Additionally, the MockitoSpy interface is added to that mock.
+
+3) Mockito creates a shallow copy of the original object so that tested code won't see or use the original object. That's important to know since any interactions on the original object will not get reflected on the spy, and vice versa (if you want to interact directly with the original object, you need to use the AdditionalAnswers.delegateTo(...) answer. 
+
+4) Creating spies with custom configuration
+
+A spy is nothing but a mock that calls real implementations by default. Here, we added an additional configuration to make the mock serializable.
+
+TaxService taxService = mock(TaxService.class,withSettings().serializable().spiedInstance(new TaxService()).defaultAnswer(CALLS_REAL_METHODS));
+
+5) Creating spies using annotations
+
+First important step to use @Spy annotation in your class is to use @RunWith(MockitoJUnitRunner.class).
+
+To inject a spy in the system under test (SUT), we can use it in conjunction with @InjectMocks as below - 
+
+@InjectMocks TaxFactorProcessor systemUnderTest;
+@Spy TaxService taxService;
+
+When TaxService doesn't have a default constructor and we need to provide some explicit value to initialize it
+
+@Spy TaxService taxService = new TaxService("Some value");
+
+6) Creating partial mocks (This is different from Spy)
+
+Using partial mocks generally should be considered a code smell. When writing good and clean code, you want it to be modular and follow all of the best practices, including the SOLID principles.
+
+You might come across a situation in which you do not want to mock the entire dependency but only a part of it while leaving the rest unstubbed (real behavior).
+
+Partial Mock scenario 1
+
+1) Create a mock (either via code or annotations).
+2) Stub the method execution so that it calls a real method (we want to execute the real logic).
+
+	@Mock TaxService taxService;
+    @InjectMocks TaxFactorProcessor systemUnderTest;
+
+    @Test
+    public void should_return_default_tax_factor_for_person_from_undefined_country() {
+        // given
+        given(taxService.calculateTaxFactorFor(any(Person.class))).willCallRealMethod();
+				......
+		
+Partial Mock scenario 2
+
+@Mock(answer = Answers.CALLS_REAL_METHODS) TaxService taxService;
+// given
+doNothing().when(taxService).updateTaxData(anyDouble(), any(Person.class));
+
+---
+
+Stubbing Behavior of Mocks
+
+For stubbibng examples our system under test will again be MeanTaxFactorCalculator, which calls TaxFactorFetcher twice and calculates a mean value out of the received tax factor values as follows:
+
+public class MeanTaxFactorCalculator {
+
+    private final TaxFactorFetcher taxFactorFetcher;
+
+    public MeanTaxFactorCalculator(TaxFactorFetcher taxFactorFetcher) {
+        this.taxFactorFetcher = taxFactorFetcher;
+    }
+
+    public double calculateMeanTaxFactorFor(Person person) {
+        double taxFactor = taxFactorFetcher.getTaxFactorFor(person);
+        double anotherTaxFactor = taxFactorFetcher.getTaxFactorFor(person);
+        return (taxFactor + anotherTaxFactor) / 2;
+    }
+
+
+1) When passing arguments to the mock's methods during the stubbing process, Mockito verifies argument values using the equals() method.
+
+Person smith = new Person();
+given(taxFactorFetcher.getTaxFactorFor(smith).willReturn(10);
+
+Mockito will check whether the person passed as an argument to the getTaxFactorFor(...) method equals to our person (in this case, Mr. Smith). If that is the case, only then will Mockito return 10 as the output of the getTaxFactorFor(...) method.
+
+2) There are cases where you want to perform more complex verification of the passed argument. Mockito already gives you quite a few predefined argument matchers and also provides you with the integration with Hamcrest to create custom argument matchers.
+
+In general, you should use equality or pass a matcher that starts with any prefix, which means you don't care about the passed value.
+
+3) Mockito argument matchers that are present in the Matchers class:
+
+a) Examples of argument matchers that start with the any prefix are any(), any(Person.class), anyDouble(), anyList(), and so on.
+
+b) Examples of argument matchers that end with the That suffix are argThat(...), booleanThat(...), doubleThat(...), and so on. You can provide a custom Hamcrest matcher that matches the argument of the given type.
+
+c) The startsWith(...) and endsWith(...) argument matchers are used for string comparison.
+
+d) The eq(...) argument matcher checks for equality.
+
+e) The isNotNull(), isNull(), and notNull() argument matchers provide verification against null values.
+
+/* match the method for any person and for the city of Warsaw */
+given(irsDataFetcher.isIrsApplicable(any(Person.class), eq("Warsaw"))).willReturn(true);
+
+/* match the method for any person and for the city starting with 'W' */
+given(irsDataFetcher.isIrsApplicable(any(Person.class), startsWith("W"))).willReturn(true);
+
+/* match the method for any Person and for the city ending with 'w' */
+given(irsDataFetcher.isIrsApplicable(any(Person.class), endsWith("w"))).willReturn(true);
+
+/* match the method for any person and for any city */
+given(irsDataFetcher.isIrsApplicable(any(Person.class), anyString())).willReturn(true);
+
+/* match the method for a person that equals another person and for any city */
+given(irsDataFetcher.isIrsApplicable(refEq(new Person()), anyString())).willReturn(true);
+
+/* match the method for the same reference of the person and for any city */
+given(irsDataFetcher.isIrsApplicable(same(person), anyString())).willReturn(true);
+
+/* match the method for a person called Lewandowski and for any city (using Hamcrest matcher) */
+given(irsDataFetcher.isIrsApplicable(argThat(new ArgumentMatcher<Person>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                return "Lewandowski".equalsIgnoreCase(((Person)argument).getName());
+            }
+
+        }), anyString())).willReturn(true);
+
+3) All of the methods of the Matchers class return dummy values so that the code gets compiled.
+
+4) One of the most common mistakes when using argument matchers is that people tend to forget that if you are using a matcher for at least one argument, then you have to provide matchers for all of the arguments. In other words, the following example will result in InvalidUseOfMatchersException.
+
+given(irsDataFetcher.isIrsApplicable(any(Person.class), "Warsaw")).willReturn(true);
+
+However, the following code will work like a charm (notice the any(...) and eq(...) matchers):
+
+given(irsDataFetcher.isIrsApplicable(any(Person.class), eq("Warsaw"))).willReturn(true);
+
+5) Remember that the last passed value during the stubbing will be for each stubbed method call. In other words, say that you stub the mock as follows:
+
+given(taxFetcher.getTax()).willReturn(50, 100); // varargs
+
+Then, regardless of the number of taxFetcher.getTax() method executions, you will first return 50 and then, you will always receive 100 (until it's stubbed again).
+
+6) Mockito allows for providing a series of possible stubbed results for same method call (getTaxFactorFor) either by using the fluent interface API, or by means of varargs. 
+
+// fluent interface API
+given(taxFactorFetcher.getTaxFactorFor(any(Person.class))).willReturn(taxFactor).willReturn(anotherTaxFactor);
+
+// varargs
+given(taxFactorFetcher.getTaxFactorFor(any(Person.class))).willReturn(taxFactor, anotherTaxFactor);
+
+7) Remember that the last passed value during the stubbing will be thrown for each stubbed method call. In other words, you stub the mock as follows:
+
+given(taxFetcher.getTax()).willThrow(new Exception1(),new Exception2());
+
+Then, regardless of the number of taxFetcher.getTax() method executions, first Exception1() will be thrown and then you will always have Exception2() thrown (until it's stubbed again).
+
+8) catch-exception configuration for Maven:
+
+<dependency>
+    <groupId>com.googlecode.catch-exception</groupId>
+    <artifactId>catch-exception</artifactId>
+    <version>1.2.0</version>
+    <scope>test</scope>
+ </dependency>    
+
+
+
+@RunWith(MockitoJUnitRunner.class)
+public class MeanTaxFactorCalculatorTest {
+
+    @Mock TaxFactorFetcher taxFactorFetcher;
+
+    @InjectMocks MeanTaxFactorCalculator systemUnderTest;
+
+    @Test
+    public void should_throw_exception_when_calculating_mean_tax_factor() {
+        given(taxFactorFetcher.getTaxFactorFor(any(Person.class))).willThrow(new TaxServiceUnavailableException());
+
+        when(systemUnderTest).calculateMeanTaxFactorFor(new Person());
+
+        thenThrown(TaxServiceUnavailableException.class);
+    }
+
+}
+
+In above test, we use the CatchExceptionAssertJ.when(...) method to allow the catch-exception library to catch the thrown exception (if there is one). Finally, we use the CatchExceptionAssertJ.thenThrown(TaxServiceUnavailableException.class) method to check whether the thrown exception was of a proper type.
+
+catch-exception is not maintained any more since in JDK 8, you can profit from the lambda expressions or try-catch block as below to achieve a similar goal.
+
+try{
+		objectUnderTest.bringOrderedMeal(mealName, vegetarian);
+		fail();
+	}catch(WrongMealException wrongMealException){
+
+	}
+
+
+9) Mockito allows for providing a series of possible stubbed exceptions either by using the fluent interface API or by means of varargs.
+
+// fluent interface API
+given(taxFactorFetcher.getTaxFactorFor(any(Person.class))).willThrow(new TaxServiceUnavailableException()).willThrow(new InvalidTaxFactorException());
+
+// varargs
+given(taxFactorFetcher.getTaxFactorFor(any(Person.class))).willThrow(new TaxServiceUnavailableException(), new InvalidTaxFactorException());
+
+10) Stubbing methods so that they return custom answers--
+
+Remember that the last passed value during the stubbing will be returned for each stubbed method call. In other words, you stub the mock as follows:
+
+
+given(taxFetcher.getTax()).willAnswer(new Answer1(), new Answer2());
+
+Then, regardless of the number of taxFetcher.getTax() method executions, first Answer1 will be executed, and then you will always have Answer2 executed (until it is stubbed again).
+
+11) Let's assume that depending on whether the person is from a defined or undefined country, the logic of calculating the factor by TaxFactorFetcher is different
+
+@RunWith(MockitoJUnitRunner.class)
+public class MeanTaxFactorCalculatorTest {
+
+    @Mock TaxFactorFetcher taxFactorFetcher;
+
+    @InjectMocks MeanTaxFactorCalculator systemUnderTest;
+
+    @Test
+    public void should_return_tax_factor_incremented_by_additional_factor_when_calculating_mean_tax_factor() {
+        // given
+      final double additionalTaxFactor = 100;
+      final double factorForPersonFromUndefinedCountry = 200;
+      given(taxFactorFetcher.getTaxFactorFor(any(Person.class))).willAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                if (invocation.getArguments().length > 0) {
+                    Person person = (Person) invocation.getArguments()[0];
+                    if (!person.isCountryDefined()) {
+                        return additionalTaxFactor + factorForPersonFromUndefinedCountry;
+                    }
+                }
+                return additionalTaxFactor;
+            }
+        });
+
+        // when
+        double meanTaxFactor = systemUnderTest.calculateMeanTaxFactorFor(new Person());
+
+        // then
+        then(meanTaxFactor).isEqualTo(additionalTaxFactor + factorForPersonFromUndefinedCountry);
+    }
+
+}
+
+12) Mockito provides a series of possible answers to be executed either by using the fluent interface API, or by means of varargs. 
+
+given(...).willAnswer(answer1).willAnswer(answer2)...willAnswer(answer3) // fluent interface API
+
+given(...).willAnswer(answer1, answer2, …. answerN) // varargs
+
+13) Stubbing methods so that they call real methods (partial Mocks)
+
+given(taxService.getTaxFactorFor(any(Person.class))).willCallRealMethod().willReturn(taxFactor);
+
+Remember that the last passed value during the stubbing will be returned for each stubbed method call. In other words, say that you stub the mock as follows:
+
+given(taxFetcher.getTax()).willReturn(2). willCallRealMethod()
+
+Then, regardless of the number of taxFetcher.getTax() method executions, first 2 will be returned, and then you will always have the real logic executed (until it is stubbed again).
+
+14) Stubbing void methods--
+
+By default, Mockito stubs the method for you so that it does nothing. However, you can explicitly tell Mockito that the void method does nothing.
+For the BDD approach, call BDDMockito.willNothing().given(mock).methodToStub(), or in the standard way, call Mockito.doNothing().when(mock).methodToStub().
+
+Remember that the last passed value during the stubbing will be returned for each stubbed method call.
+
+willThrow(new Exception1()).willNothing().given(personSaver).savePerson(smith); // void methods can also be stubbed so that they throw exceptions.
+
+Then, regardless of the number of personSaver.savePerson(...) method executions, first an exception will be thrown, and then you will always have no action taken (until it is stubbed again).
+
+15) void methods can also be stubbed so that they return custom answers as below:
+
+
+@RunWith(MockitoJUnitRunner.class)
+public class PersonProcessorTest {
+
+    @Mock PersonSaver personSaver;
+  
+    @InjectMocks PersonProcessor systemUnderTest;
+
+    @Test
+    public void should_fail_to_save_person_data_due_to_having_undefined_country() {
+        // given
+        willAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                if (invocation.getArguments().length > 0) {
+                    Person person = (Person) invocation.getArguments()[0];
+                    if (!person.isCountryDefined()) {
+                        throw new FailedToSavedPersonDataException("Undefined country");
+                    }
+                }
+                return null;
+            }
+        }).given(personSaver).savePerson(any(Person.class));
+
+        // when
+        boolean updateSuccessful = systemUnderTest.process(new Person());
+
+        // then
+        then(updateSuccessful).isFalse();
+    }
+  
+}
+
+Note that since we have a void method to stub, we don't care about the answer's returned value. That is why we return null in the answer's body.
+
+16) void methods can also be stubbed  so that they call real methods.
+
+willCallRealMethod().willNothing().given(personSaver).savePerson(smith);
+
+17) Stubbing final methods with PowerMock
+
+Mockito can't stub methods that are final, we'll use PowerMock to do it.
+
+Let us assume that TaxFactorFetcher is a class which has a final method that we want to stub. TaxFactorFetcher.getTaxFactorFor(...) is a final method.
+
+public class MeanTaxFactorCalculator {
+
+    private final TaxFactorFetcher taxFactorFetcher;
+
+    public MeanTaxFactorCalculator(TaxFactorFetcher taxFactorFetcher) {
+        this.taxFactorFetcher = taxFactorFetcher;
+    }
+
+    public double calculateMeanTaxFactorFor(Person person) {
+        double taxFactor = taxFactorFetcher.getTaxFactorFor(person);
+        double anotherTaxFactor = taxFactorFetcher.getTaxFactorFor(person);
+        return (taxFactor + anotherTaxFactor) / 2;
+    }
+
+}
+
+
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(TaxFactorFetcher.class) // Since TaxFactorFetcher is a class which has a final method (getTaxFactorFor) that we want to stub.
+public class MeanTaxFactorCalculatorTest {
+
+    @Mock TaxFactorFetcher taxFactorFetcher;
+  
+    @InjectMocks MeanTaxFactorCalculator systemUnderTest;
+
+    @Test
+    public void should_calculate_tax_factor_for_a_player_with_undefined_country() {
+        // given
+      double expectedMeanTaxFactor = 10;
+        given(taxFactorFetcher.getTaxFactorFor(any(Person.class))).willReturn(5.5, 14.5);
+
+        // when
+        double meanTaxFactor = systemUnderTest.calculateMeanTaxFactorFor(new Person());
+
+        // then
+        then(meanTaxFactor).isEqualTo(expectedMeanTaxFactor);
+    }
+  
+}
+-----
+
+Stubbing Behavior of Spies
+
+1) Stubbing methods that return values--
+
+For the BDD approach, call BDDMockito.willReturn(value).given(spy).methodToStub(). Or, in the standard manner, call Mockito.doReturn(value).when(spy).methodToStub().
+
+Whichever approach you've chosen, you have to provide the desired output in the willReturn(...) or thenReturn(...) method, and pass the spy itself in the given(...) or when(...) method.
+
+Remember that the last passed value during stubbing will be returned for each stubbed method call. Have a look at the following code:
+
+willReturn(50,100).given(taxFetcher).getTax();
+
+As shown in the preceding line of code, regardless of the number of taxFetcher.getTax() method executions, you will first return 50 and then always receive 100 (until stubbed again).
+
+You have to bear in mind that if you try to stub a method with the BDDMockito.given(...).willReturn(...) call or in the standard manner—with the Mockito.when(...).thenReturn(...) call—then you will actually call the spy's method that you want to stub!
+
+
+2) Stubbing methods so that they throw exceptions--
+
+@RunWith(MockitoJUnitRunner.class)
+public class AverageTaxFactorCalculatorTest {
+
+  @Spy TaxFactorFetcher taxFactorFetcher;
+  
+  @InjectMocks AverageTaxFactorCalculator systemUnderTest;
+
+    @Test
+    public void should_throw_exception_while_trying_to_calculate_mean_tax_factor() {
+      willThrow(new TaxFactorFetchException()).given(taxFactorFetcher).getTaxFactorFor(any(Person.class));
+        
+      when(systemUnderTest).calculateAvgTaxFactorFor(new Person());
+        
+      thenThrown(TaxFactorFetchException.class);      
+    }
+
+}
+
+Note that we are not passing an additional expected parameter to the @Test annotation (the expected parameter suggests that if a test ends by throwing an exception of the given type, then the test has ended successfully). In the majority of cases, you would want to control where the exception is thrown from (otherwise, your test could pass when it shouldn't). That is why, either you should use the try-catch approach (if an exception has not been thrown, the test should fail with a given message), the ExpectedException JUnit rule, or the catch-exception library.
+
+3) Stubbing methods so that they return custom answers--
+
+willAnswer(answer1).willAnswer(answer2).given(spy).methodToStub()
+
+4) Stubbing void methods --
+
+For the BDD approach, call the BDDMockito.willDoNothing().given(spy).methodToStub(). Or, in the standard manner, call Mockito.doNothing().when(spy).methodToStub().
+
+Whichever approach you've chosen, willDoNothing() or doNothing(), you will pass the spy itself in the given(...) or when(...) method.
+
+5) Stubbing void methods so that they throw exceptions--
+
+For the BDD approach, call BDDMockito.willThrow(exception).given(spy).methodToStub(). Or, in the standard manner, call Mockito.doThrow(exception).when(spy).methodToStub().
+
+6) Stubbing void methods so that they return custom answers--
+
+For the BDD approach, call BDDMockito.willAnswer(answer).given(spy).methodToStub(). Or, in the standard manner, call Mockito.doAnswer(answer).when(spy).methodToStub()
+
+---
+
+Verifying Test Doubles
+
+1) Verify the exact number of method invocations--
+
+To verify whether the mocked object's method was called the exact number of times as specified in the code, you have to call 
+
+Mockito.verify(mock, VerificationMode.times(count)).methodToVerify(...)
+
+To verify whether the method has been called once, you can write it in the following way (because Mockito assumes a single method execution (times(1)) by default):
+
+verify(taxService).updateMeanTaxFactor(any(Person.class), anyDouble());  // Is same as
+verify(taxService, times(1)).updateMeanTaxFactor(any(Person.class), anyDouble());
+
+If you want to ensure target invocation never happens, you can set times=0 or use alias method never():
+
+verify(mockContext, never()).addError("No space allowed."); // Is same as
+verify(mockContext, times(0)).addError("No space allowed.");
+
+2) Verify the boundaries of method invocations (at most, at least)
+
+To verify whether the mocked object's method was called at least a given number of times, call 
+
+Mockito.verify(mock, VerificationMode.atLeast(count)).methodToVerify(...)
+
+To verify whether the method has been executed at least once, you can write it as follows:
+
+verify(taxService, atLeastOnce()).updateMeanTaxFactor(any(Person.class), anyDouble());
+
+To verify whether the mock's method was invoked at most a given number of times, call 
+
+Mockito.verify(mock, VerificationMode.atMost(count)).methodToVerify(...)
+
+3) Verify interactions with whole Mock 
+
+You can use the Mockito.verifyZeroInteractions(...) method to specify that you do not wish interactions to take place with a mock.
+
+@RunWith(MockitoJUnitRunner.class)
+public class TaxTransfererTest {
+
+    @Mock TaxService taxService;
+
+    @InjectMocks TaxTransferer systemUnderTest;
+
+    @Test
+    public void should_not_interact_with_web_service_in_any_way_if_person_is_null() {
+        // when
+        systemUnderTest.transferTaxFor(null);
+
+        // then
+        verifyZeroInteractions(taxService);
+    }
+}
+
+
+The following code ensures that beside addError(String), there is no more interaction with the context mockContext. Method like Context#neverCalled() is never called by validator.
+
+Context mockContext = mock(Context.class);
+
+Validator validator = new Validator(mockContext);
+validator.validate("Hello world");
+
+verify(mockContext).addError("No space allowed.");
+verifyNoMoreInteractions(mockContext);
+
+To verify that the only method executed on a mock is the one provided by us, you have to call 
+
+Mockito.verify(mock, VerificationMode.only()).methodToVerify(...).
+
+4) Verifying the order of interactions
+
+List<String> mockedList = mock(MyList.class);
+mockedList.size();
+mockedList.add("a parameter");
+mockedList.clear();
+
+InOrder inOrder = Mockito.inOrder(mockedList);
+inOrder.verify(mockedList).size();
+inOrder.verify(mockedList).add("a parameter");
+inOrder.verify(mockedList).clear();
+
+Perform in-order verifications for one or more mock objects. In this way, you can verify if one method is called before another. It also works for multiple mocks. Also, verification in-order is flexible—you don’t have to verify all interactions one-by-one but only those that you are interested in testing in order.
+
+Here’s an example with two mock objects to be verified. Only error A and error C are asserted, error B is ignored.
+
+Context ctx1 = mock(Context.class);
+Context ctx2 = mock(Context.class);
+
+ctx1.addError("A");
+ctx2.addError("B");
+ctx2.addError("C");
+
+// all verifications done in same InOrder instance
+
+InOrder inOrder = inOrder(ctx1, ctx2);
+inOrder.verify(ctx1).addError("A");
+
+// you don't have to verify all interactions, but only
+// mocks that are relevant for in-order verification
+
+inOrder.verify(ctx2).addError("C");
+
+We can also use VerificationMode in inOrder.verify() methods as shown below-
+
+InOrder inOrder = Mockito.inOrder(taxService);
+inOrder.verify(taxService).updateTaxFactor(eq(person), anyDouble());
+inOrder.verify(taxService, times(2)).transferTaxFor(person);
+inOrder.verify(taxService).updateTaxFactor(eq(person), anyDouble());
+inOrder.verify(taxService).transferTaxFor(person);
+
+5) Verifying interactions and ignoring stubbed methods
+
+When you call Mockito.ignoreStubs(Object... mocks), Mockito goes through all the provided mocks and then marks invocations on their methods so that if they get stubbed, then they should be ignored for verification.
+
+verify(taxService).transferTaxFor(person);
+verifyNoMoreInteractions(ignoreStubs(taxService));
+
+6) Verifying the method invocation within the specified time
+
+To verify whether a method was executed within the given time, you have to call 
+
+Mockito.verify(mock, Mockito.timeout(millis)).methodToVerify();
+
+7) Verify interaction using argument capture
+
+Example 1
+
+// Annotate your test with @RunWith(MockitoJUnitRunner.class) - Must for @Captor annotation
+@RunWith(MockitoJUnitRunner.class)
+public class TaxTransfererTest {
+
+    @Mock TaxService taxService;
+
+    @InjectMocks TaxTransferer systemUnderTest;
+
+	// Create a field of the ArgumentCaptor type and annotate it with the @Captor annotation
+    @Captor ArgumentCaptor<Person> personCaptor;
+
+    @Test
+    public void should_change_persons_country_before_sending_data_through_ws() {
+        // when
+        systemUnderTest.transferTaxFor( new Person("Lewandowski", "UK"));
+
+        // To use the capturing of arguments, you have to verify a method and provide the capture() method of ArgumentCaptor as its parameter
+        verify(taxService).transferTaxFor(personCaptor.capture());
+		
+		// Now your captor will contain the captured arguments and they can be retrieved using argumentCaptor.getValue() or argumentCaptor.getAllValues()
+      then(personCaptor.getValue()).hasName("Lewandowski").hasCountry("Poland");
+    }
+  
+}
+
+Example 2
+
+List<String> mockedList = mock(MyList.class);
+mockedList.addAll(Lists.<String> newArrayList("someElement"));
+ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
+verify(mockedList).addAll(argumentCaptor.capture());
+List<String> capturedArgument = argumentCaptor.<List<String>> getValue();
+assertThat(capturedArgument, hasItem("someElement"));
+
+---
+
+Tips --
+
+A) Argument matching with different kinds of matchers 
+
+assertThat(meal.isVegetarian(), is(true));
+verify(kitchenServiceMock).prepareMeal(mealName, VEGETARIAN_MEAL); // assertion by the equals method
+verify(kitchenServiceMock).prepareMeal(and(contains("Ham"), endsWith("Hamburger")), eq(VEGETARIAN_MEAL)); // Mockito AdditionalMatchers 
+verify(kitchenServiceMock).prepareMeal(matches("V.*n H.*r"), anyBoolean()); // Mockito Matchers
+
+Stub using Mockito Matchers (eq, startsWith etc.)
+
+when(kitchenServiceMock.prepareMeal(startsWith("Vegetarian"), eq(VEGETARIAN_MEAL))).thenReturn(new VegetarianFirstCourse()); // Mockito Matchers
+
+// Remember that if to the argument list provide at least one matcher then all of the parametrs must become matchers
+verify(kitchenServiceMock).prepareMeal(startsWith("Vegetarian"), VEGETARIAN_MEAL);
+
+Above statement throws an InvalidUseOfMatchersException, as you've forgotten to use Matchers for all of the arguments – notice that the second Boolean parameter is set directly. In order to fix it, you would have to wrap the Boolean with, for example, an eq() Matcher.
+
+when(kitchenServiceMock.prepareVegetarianMeals(anyListOf(String.class))).thenReturn(createSampleMealList());
+
+anyListOf(…): Matcher can be used as a dummy (an object that is used only to fill an argument list) for the lists of a given type
+
+If in place there was a map or a set, you could use the anyMapOf() and anySetOf() matcher respectively
+
+If you don't care about the type of objects stored in the collection you can use either the anyList(), anySet(), anyMap() or even anyCollection() matcher
+
+B) Stubbing multiple calls
+
+@Override
+public int calculateTotalWaitingTime(List<Meal> meals) {
+	int totalTime = 0;
+	for (Meal meal : meals) {
+		try {
+			totalTime = totalTime + kitchenService.calculatePreparationTime(meal);
+		} catch (TooBusyToCalculateException tooBusyToCalculateException) {
+			System.err.printf("I am sorry but I couldn't calculate the preparation time of the meal [%s]%n", meal.getName());
+		}
+	}
+	return totalTime;    
+}
+
+
+@Test
+public void shouldCalculatePreparationTimeForAListOfMeals() throws Exception {
+	//given
+	WaiterImpl objectUnderTest = new WaiterImpl(kitchenServiceMock);
+
+	List<Meal> meals = mock(List.class);
+	Iterator<Meal> mealIterator = mock(Iterator.class);
+	when(meals.iterator()).thenReturn(mealIterator);
+	// Since we want to return 3 elements from our list, the hasNext() method of the iterator needs to return 3 times true, and the 4th call should return false
+	when(mealIterator.hasNext()).thenReturn(true, true, true, false);
+	// next() method that should return a Meal object 3 times
+	when(mealIterator.next()).thenReturn(new Dessert(), new FirstCourse(), new VegetarianFirstCourse()); // thenReturn var args 
+
+	int dessertPreparationTime = 1;
+	int firstCoursePreparationTime = 2;
+	int vegetarianFirstCoursePreparationTime = 3;
+	int referenceTotalPreparationTime = dessertPreparationTime + firstCoursePreparationTime + vegetarianFirstCoursePreparationTime;
+
+	// thenReturn fluent API 
+	when(kitchenServiceMock.calculatePreparationTime(any(Meal.class))).thenReturn(dessertPreparationTime)
+			.thenReturn(firstCoursePreparationTime)
+			.thenReturn(vegetarianFirstCoursePreparationTime);
+
+	//when
+	int totalPreparationTime = objectUnderTest.calculateTotalWaitingTime(meals);
+
+	//then
+	assertThat(totalPreparationTime, is(referenceTotalPreparationTime));
+	verify(kitchenServiceMock, times(3)).calculatePreparationTime(any(Meal.class));
+}
+
+A similar piece of code can be used with throwing exceptions:
+
+@Test
+    public void shouldThrowExceptionsWhileCalculatingTotalTimeAndReturnZeroAsTotalTime() throws Exception {
+        //given
+        WaiterImpl objectUnderTest = new WaiterImpl(kitchenServiceMock);
+
+        List<Meal> meals = mock(List.class);
+        Iterator<Meal> mealIterator = mock(Iterator.class);
+        when(meals.iterator()).thenReturn(mealIterator);
+        when(mealIterator.hasNext()).thenReturn(true, true, true, false);
+        when(mealIterator.next()).thenReturn(new Dessert(), new FirstCourse(), new VegetarianFirstCourse());
+
+        when(kitchenServiceMock.calculatePreparationTime(any(Meal.class))).thenThrow(new TooBusyToCalculateException(), new TooBusyToCalculateException(), new TooBusyToCalculateException());
+
+        //when
+        int totalPreparationTime = objectUnderTest.calculateTotalWaitingTime(meals);
+
+        //then
+        assertThat(totalPreparationTime, is(0));
+        verify(kitchenServiceMock, times(3)).calculatePreparationTime(any(Meal.class));
+    }
+
+Thanks to the fluent API you can mix thenReturn(…) with thenThrow(…)
+
+Mockito gives you a flexible, iterator-style API so you can chain method executions of stubbing in several ways:
+
+The recommended one – since its argument type – safe and more readable, especially when stubbing consecutive calls: when(…).thenReturn(…). thenAnswer(…).thenCallRealMethod(…).thenThrow(…)
+
+The less recommended one – although sometimes necessary, especially while using spies: doAnswer(…).doCallRealMethod(…).doNothing(…).doThrow(…).when(mock).mocksMethodCall(…)
+
+If you are a fan of BDD, Mockito gives you the possibility of using different syntax by using the BDDMockito static methods: given(…).willReturn(…).willAnswer(…).willCallRealMethod(…).willThrow(…)
+
+You can also use the varargs methods to provide multiple objects to be returned or thrown on subsequent calls to the stubbed method: thenReturn(object1, object2 … objectn) or thenThrow(exception1, exception2, … exceptionn)
+
+C) Working with void methods and thrown exceptions
+
+In case of mocking void methods, you have to use the way of stubbing that starts with providing the desired behavior(doReturn/doThrow). 
+
+doThrow(new IAmTooLazyToDoItException()).when(kitchenServiceMock).cleanTheKitchen();
+
+First method invocation should throw an exception, and when the method is executed again we would like it to terminate without any exceptions.
+
+doThrow(new IAmTooLazyToDoItException()).doNothing().when(kitchenServiceMock).cleanTheKitchen();
+
+You don't have to stub void methods – by default they will do nothing. It's an equivalent to stubbing the void method in the following manner: doNothing(…).when(mock).aCallToYourStubbedMethod(…)
+
+If you need to change the default behavior of the void methods use the following syntax: doAnswer(…).doCallRealMethod(…).doNothing(…).doThrow(…).when(mock). aCallToYourStubbedMethod (…)
+
+Do not use JUnit @Test annotation together with the expected parameter, if you want to verify whether an exception has been thrown – use try catch or the catch-exception library
+
+D) Testing of asynchronous code
+
+Multithreading is a very tricky issue, and there are very thick books that depict the complexity of the problem. Mockito allows us to perform some verification with timeout, which can come in handy, but there are other libraries especially dedicated to performing the testing of asynchronous code (for example awaitility
+
+@Test
+    public void shouldThrowErrorWhenTheVerifiedMethodHasNotBeenExecutedDuringGivenTime() throws Exception {
+        //given
+        final WaiterImpl objectUnderTest = new WaiterImpl(kitchenServiceMock);
+
+        //when
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    System.err.printf("[%s] occurred while trying to make the thread sleep%n", e);
+                }
+                objectUnderTest.closeTheRestaurant();
+            }
+        }).start();
+
+        //then
+        try {
+            verify(kitchenServiceMock, timeout(10)).cleanTheKitchen();
+            fail();
+        } catch (WantedButNotInvoked wantedButNotInvokedError) {
+            System.err.printf("Exception [%s] occurred. The mock's method hasn't been called during the specified timeout%n", wantedButNotInvokedError);
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
