@@ -1,0 +1,1606 @@
+---------------------------------------------------------------------------------------------------------------------------
+Book 1 - Git Complete By Jason Taylor + Book 2 - Complete Git Guide By Bogdan Stashchuk
+---------------------------------------------------------------------------------------------------------------------------
+
+Introduction
+
+1) There are 2 main types of source control systems - Centralized and Distributed. 
+2) In Centralized source control, a connection to the central server is required for most of the common operations. 
+3) Git is a distributed source control system in which most operations are local and do not require a central server.
+4) Default Github account is a free account which can have unlimited public repositories.
+5) For private repositories, you need to have a paid Github account. Payment increases with no. of private repositories.
+
+-------
+
+Why to prefer command-line over Graphical clients for Git?
+
+1) Best way to learn Git
+2) Git was originally designed as a command-line tool. Graphical clients came later.
+3) New features are introduced for command-line before they are integrated with the graphical client.
+4) Lot of online help is available for command-line tools.
+5) Command-line has more power! Most of the graphical clients support only core features. However, command-line supports raw powerful features of Git.
+6) Command-line commands are consistent for Windows (Git bash) and Mac/Linux (Terminal/iTerm2).
+
+-------
+
+Why Git is so popular?
+
+1) Even though Git is a distributed/decentralized source control system, it don't have to be distributed.
+2) Due to it's distributed nature, git can scale massively.
+3) Free and Open source. Lot of active community.
+4) Most operations in Git can be performed locally. Only few operations require network connection. 
+5) Git is very fast due to local operations.
+6) Git is most popular DVCS/VCS (Distributed Version Control System/Version Control System).
+7) Git can be easily integrated with other development tools like text editors, bug tracking tools and CI/CD tools like Jenkins.
+
+-------
+
+Key Concepts in Git
+
+1) Repository contains files, history and config managed by Git.
+2) Four stages of Git (3 Local and 1 Remote).
+3) 3 Local stages -- Working directory, Staging/pre-commit area and Post-commit (Local Repository/History).
+4) 1 Remote - Remote Repository 
+5) Hidden .git folder in working directory is nothing but a Local Repository. .git/config file contains configuration details of local repo.
+6) Staging area is also called as Git index, where files are queued up before they are actually committed.
+
+-------
+
+Set initial Git configuration (name and email)
+git config --global user.name "Shirish Phatangare (OSV)"
+git config --global user.email "shirish.phatangare.osv@fedex.com"
+
+List Git configuration
+git config --global --list
+
+.gitconfig file in user's home directory has all the global settings defined above. 
+name and email are associated with every commit in commit history.
+
+If we do not mention "--global", properties are set for the specific repository. 
+
+git config user.name "Shirish Phatangare (OSV)"
+git config user.email "shirish.phatangare.osv@fedex.com"
+
+Properties of local configuration overrides properties of global config.
+
+To List local config use 
+git config --list
+
+-------
+
+Open config files with editor
+
+Global config (in user's home directory)
+vi ~/.gitconfig
+
+Local config (in local repo directory)
+vi .git/config
+
+-------
+
+Clone the repository 
+git clone <Repo-URL>
+
+Be default, after cloning git will not create corresponding local branches for all remote branches except default remote branch.
+To clone specific branch instead of default branch
+git clone <Repo-URL> -b <Branch-Name>
+
+-------
+
+What is difference between Git and GitHub?
+
+Git - Distributed Version-Control system. Git is local and do not need Internet connection. Local Repo at Git
+GitHub - Repository Hosting Service. GitHub manages repos created using Git by different developers and needs Internet. Remote repo at GitHub.
+
+-------
+
+1) Visual Studio code can be used as a default editor for Git.
+2) iTerm2 is more convenient to use than default Terminal application on MacOs.
+3) Bash-shell(default shell) and Z-shell (custom shell) are two options available to use with iTerm2.
+4) iTerm2 with custom Z-Shell is a good combination. We need to install Z-Shell.
+5) Two componenets - oh-My-ZSH and Zsh needs to be installed. Oh-My-Zsh is a framework for zsh configuration management.
+6) Oh-My-Zsh allows different configuration options and custom themes for Zsh.
+
+Tip - When using visual studio code as git editor, 'code .' command opens current repo into visual studio code.
+
+-------
+
+What are various Git object types?
+
+1) Commit
+2) Tree
+3) Blob
+4) Annotated Tags
+
+There is a .git/objects folder where these objects are stored. 
+
+-------
+
+Move file from Unmodified state (Local repo) --> Untracked (working directory as a new file)
+
+1) If we commit some file by mistake, we can untrack that file from local repo back to the working directory.
+2) We can Untrack files already added to git repository based on .gitignore
+3) Remove file from the repository but keep it in your working directory
+git rm --cached <file>
+
+-------
+
+
+What is GitHub Desktop?
+
+GitHub Desktop interacts with Remote Repo and also works well with Local Repo. It is avaliable for both Windows and Mac.
+GitHub Desktop can be used in parallel with Command-line interface to simply things.
+Visual Studio code editor can be used with GitHub Desktop.
+
+-------
+
+What is HEAD in Git?
+
+Branch is just a text reference to the commit.
+There can be multiple branches in a local Repo, but HEAD is only one.
+HEAD points to the last commit of current branch in local Repo.
+In other words, HEAD is a reference to the currently checked out branch or commit.
+
+Change reference(HEAD) to specific branch - git checkout <branch>
+Change reference(HEAD) to specific commit - git checkout <Commit-id>
+
+Branch will always point to last commit of that branch. However, HEAD can point to any commit of a branch.
+You can have multiple braches in a local repo. However, there can be only one HEAD in a local repo.
+
+---------------
+
+Get the status of your local repository (Basic Git workflow)
+git status
+
+1) Default branch for a cloned repo is master (unless different branch specified with git clone <Repo-URL> -b <Branch>)
+2) Default reference to remote repo is origin
+3) Reference and branch is shown as origin/master in command output. 
+4) git status command will compare and show differences between Working directory, Staging area, Local Repo and Remote Repo.
+5) When there is nothing to be committed in the working dir, working directory is shown as clean. 
+6) Git sees every file in your working copy as one of three:
+	a) tracked - a file which has been previously staged or committed.
+	b) untracked - a file which has not been staged or committed.
+	c) ignored - a file which Git has been explicitly told to ignore.
+
+Tip - Git Files Lifecycle (Refer to saved snapshot from book - Git-Files-Lifecycle.jpeg)
+
+List all tracked files
+git ls-files	
+
+To discard changes in working directory
+git restore <file>  
+or
+git checkout -- <file>
+
+checkout operation takes files from local repo and puts them in a working directory.
+checkout can be done for a file, branch or even for a commit.
+
+To add changes from working dir to staging area
+git add <file>
+
+To add all changes to staging area
+git add . - stages all changes
+or
+git add -A - stages all changes
+git add -u  --> stages modifications and deletions, without new files. (Updates all tracked files) 
+
+To restore staged file back to working dir
+git restore --staged <file>
+or
+git reset HEAD <file>
+or
+git rm --cached <file>
+
+To restore everything staged
+git restore --staged .
+
+
+Takes the staged snapshot and commits it 
+git commit -m 'Initial commit'
+git commit <File-Name> -m 'making a change in a branch'
+
+We can combine add and commit as (Express commit)
+git commit -am 'Initial commit'
+
+Below commands with --amend option are destructive commands. With each ammend new commit is created and old one is deleted!
+To amend commit message of previous/last commit
+git commit --amend
+
+To amend commit message and Author information of previous/last commit
+git commit --amend --author=<Name and Email>
+
+To pull all the changes from remote  
+git pull <Reference> <Branch-Name>
+git pull origin master
+or just git pull with default reference and branch
+
+Send your committed changes to remote repository. This command specifies that you are pushing to the target branch on origin (the remote server).
+git push <Reference> <Branch-Name>
+git push origin master
+or just git push with default reference and branch
+
+Tip - ALWAYS pull changes before you push anything to remote repo
+TIp - git pull updates only single local currently checked-out branch 
+
+git pull = git fetch + git merge
+git fetch updates local repo from remote repo (git fetch updates FETCH_HEAD)
+git merge updates working dir and Staging area (index) from local repo (git merge FETCH_HEAD)
+
+Overall git pull scenario example
+
+a) Clone remote repo
+b) Checkout master branch locally.
+c) Make some changes and commit them in remote repo "master" branch.
+d) After git pull locally, Git will fetch remote changes.
+e) After fetching, Git will merge remote master branch into local master branch (fast-forward or 3-way merge)
+f) If conflicts are there, we need to resolve conflicts first and then merge process completes.
+g) working dir and Staging area (index) will be automatically updated after merge.
+
+After 'git pull' command if conflicts are there, then we remain in merge state till conflicts are fixed and committed or git is aborted manually. 
+
+Flag -v means verbose for below commands. It gives more details in output.
+ 
+git pull -v
+git fetch -v
+git remote -v
+
+-----
+
+Text Editor Integration with Git
+
+vi editor is the default editor for Git, which can be changed to other convenient editors.  
+Git default editor will be used by commands like - git commit
+
+Windows - Configure Notepad++ with Git
+
+1) Add path of Notepad++ executable in environment variables, so that it can be executed from the git-bash command-line.
+2) Create bash alias for Notepad++, so that we can shorten Notepad++ to npp and execute it from the command-line.
+3) Create .bashrc file in users home directory with below command.
+	alias npp='notepad++.exe -multiInst -nosession'
+
+Tip - Since this is bash, we are creating a .bashrc file. On Mac Terminal, we may need to create .zshrc file which gets executed every time a new terminal window opens.
+
+4) Configure npp as default editor for Git
+	git config --global core.editor 'notepad++.exe -multiInst -nosession'
+
+
+Mac - Configure TextMate2 with Git
+
+1) Install TextMate2 on Mac
+2) TextMate --> Preferences --> Terminal --> Install Shell support
+3) Edit ./bash_profile file to add below
+	export EDITOR="/usr/local/bin/mate -w"
+4) With above configuration, we can use Textmate as an editor from Mac Terminal
+5) Configure TextMate 2 as a default editor for Git 
+	git config --global core.editor 'mate -w'
+
+-------
+
+Basic Git commands
+
+A) Starting a Project
+
+1) Starting with a Fresh Project (git init) - No source yet
+
+Shirish@LAPTOP-7B3OO6RC MINGW64 /C/git-repos
+git init Azure_Projects
+Initialized empty Git repository in C:/git-repos/Azure_Projects/.git/
+
+2) Adding git to an existing project locally (git init)
+
+Let us say we have an exisitng project web_Project with source code. 
+
+Shirish@LAPTOP-7B3OO6RC MINGW64 /C/git-repos/web_Project
+$ git init
+Initialized empty Git repository in C:/git-repos/web_Project/.git/
+
+Presence of .git folder in project directory indicates that this project is managed by Git.
+
+3) Joining an existing project on GitHub (fork and clone)
+
+Fork - Making a copy of an upstream repo into your personal account.
+Clone - Cloning an exisiting project from remote repo to local repo.
+
+-------
+
+Below commands will rename/delete/move files and also stage them
+
+Rename a file 
+git mv <OLD-NAME> <NEW-NAME>
+
+Delete a tracked file
+git rm <FILE-NAME>
+
+Get help
+git <command> -h  (Summary Help)
+git help <command> (Detailed Help)
+
+Display history of commits
+git log
+
+Display summary of history of commits
+git lg
+
+Commit-Id is noting but a SHA1 hash. Every commit has a SHA1 hash associated with it.
+History with short commit ids
+git log --abbrev-commit
+
+History for a specific file
+git log -- <file>
+
+One line commit history
+git log --oneline
+
+One line commit history with graph (tree) of commits and branches
+git log --graph
+
+Display commit history details
+git log --oneline --graph --decorate --all
+
+Create a git alias 'hist' for long git command
+git config --global alias.hist <Original git command without 'git' word>
+git hist will execute long git command
+
+Pretty formatting of git log
+git log --pretty=format:"%cn %H" - Displays only committer name and SHA1 hash 
+git log --pretty=format:"Author: %cn; SHA1: %H" - Displays committer name and SHA1 hash with labels
+
+Show only Merge Commits in Git Log
+git log --merges
+
+Show results without Merge Commits in Git Log
+git log --no-merges
+
+-------
+
+.gitignore - Ignoring Unwanted Files and Folders
+Usually .gitignore file is located in the root of the repo.
+Ideally .gitignore  file should be created when a new repo or project is created. It is also possible to add .gitignore file later to existing repo or project.
+
+Git sees every file in your working copy as one of three:
+	a) tracked - a file which has been previously staged or committed.
+	b) untracked - a file which has not been staged or committed.
+	c) ignored - a file which Git has been explicitly told to ignore.
+
+Ignored files are usually build artifacts and machine generated files that can be derived from your repository source or should otherwise not be committed. Some common examples are:
+
+a) dependency caches, such as the contents of /node_modules or /packages
+b) compiled code, such as .o, .pyc, and .class files
+c) build output directories, such as /bin, /out, or /target
+d) files generated at runtime, such as .log, .lock, or .tmp
+e) hidden system files, such as .DS_Store or Thumbs.db
+f) personal IDE config files, such as .idea/workspace.xml
+
+1) gitignore - Specifies intentionally untracked files to ignore. There are files you don't want Git to check in to GitHub.
+2) In Terminal, navigate to the root of your Git repository. Enter 'touch .gitignore' to create a .gitignore file.
+3) .gitignore files contain patterns that are matched against file names in your repository to determine whether or not they should be ignored.
+4) You can use # to include comments in your .gitignore file.
+5) As soon as we add/modify .gitignore file, untracked files in working dir gets ignored.
+
+A) Simple .gitingore rules
+
+<file-name> - Ignore this specific file <file-name>
+*.tmp - Ignore all .tmp files.
+<Folder-name>/ -  Entire contents of directory <Folder-name> in the repository including all of its files and subdirectories will be ignored. 
+
+Some common patterns --
+
+**/logs	--	You can prepend a pattern with a double asterisk to match directories anywhere in the repository.
+
+logs/debug.log
+logs/monday/foo.bar
+build/logs/debug.log
+
+*.log	--	An asterisk is a wildcard that matches zero or more characters.
+
+debug.log
+foo.log
+.log
+logs/debug.log
+
+
+.log
+!important.log	--	Prepending an exclamation mark to a pattern negates it. If a file matches a pattern, but also matches a negating pattern defined later in the file, it will not be ignored.
+
+debug.log
+trace.log
+but not
+important.log
+logs/important.log
+
+
+/debug.log	--	Prepending a slash matches files only in the repository root.
+
+debug.log
+but not
+logs/debug.log
+
+
+logs/debug.log	--	Patterns specifying a file in a particular directory are relative to the repository root. (You can prepend a slash if you like, but it doesn't do anything special.)
+
+logs/debug.log
+but not
+debug.log
+build/logs/debug.log
+
+
+debug.log	--	By default, patterns match files in any directory
+
+debug.log
+logs/debug.log
+
+
+debug?.log	-- A question mark matches exactly one character.
+
+debug0.log
+debugg.log
+but not
+debug10.log	
+
+
+debug[a-z].log	--	Ranges can be numeric or alphabetic. Square brackets match a single character form the specified set.
+
+debuga.log
+debugb.log
+but not
+debug1.log
+debugab.log
+
+
+logs	--	If you don't append a slash, the pattern will match both files and the contents of directories with that name. In the example matches on the left, both directories and files named logs are ignored
+
+logs
+logs/debug.log
+logs/latest/foo.bar
+build/logs
+build/logs/debug.log
+
+
+logs/	--	Appending a slash indicates the pattern is a directory. The entire contents of any directory in the repository matching that name – including all of its files and subdirectories – will be ignored
+
+logs/debug.log
+logs/latest/foo.bar
+build/logs/foo.bar
+build/logs/latest/debug.log
+
+
+logs/**/debug.log	--	A double asterisk matches zero or more directories.
+
+logs/debug.log
+logs/monday/debug.log
+logs/monday/pm/debug.log
+
+B) Ignoring a previously committed file --
+
+If you want to ignore a file that you've committed in the past, you'll need to delete the file from your repository and then add a .gitignore rule for it. Using the --cached option with git rm means that the file will be deleted from your repository, but will remain in your working directory as an ignored file.
+
+A) To untrack a single file that has already been added/initialized to your repository, i.e., stop tracking the file but not delete it from your system use: 
+git rm --cached <filename>
+
+Example - 
+
+$ echo debug.log >> .gitignore
+$ git rm --cached debug.log
+rm 'debug.log'
+$ git commit -m "Start ignoring debug.log"
+
+You can omit the --cached option if you want to delete the file from both the repository and your local file system.
+
+C) Committing previously ignored file --
+
+1) Simplest approach is to remove file from .gitignore and commit the changes.
+
+2) It is possible to force an ignored file to be committed to the repository using the -f (or --force) option with git add:
+
+$ cat .gitignore
+*.log
+$ git add -f debug.log
+$ git commit -m "Force adding debug.log"
+
+3) You might consider doing this if you have a general pattern (like *.log) defined, but you want to commit a specific file. However a better solution is to define an exception to the general rule:
+
+$ echo !debug.log >> .gitignore
+$ cat .gitignore
+*.log
+!debug.log
+$ git add debug.log
+$ git commit -m "Adding debug.log"
+
+D) Git ignore Common Practices and Templates
+
+gitignore.io - You can get contents for .gitignore file based on OS, language or IDEs.
+github.com/github/gitignore - Gti repo containing sample .gitignore files
+
+-------
+
+Compare and Merge Tools (perforce.com)
+
+Windows - P4Merge For Windows
+
+1) Search for Helix Visual Merge Tool (P4Merge) on perforce.com
+2) Install P4Merge For Windows and set PATH env variable to execute it from the command prompt.
+3) Configure Git to set P4Merge as default diff/merge tool.
+
+git config --global diff.tool p4merge
+git config --global difftool.p4merge.path "C:\Program Files\Perforce\p4merge.exe"
+git config --global difftool.prompt false
+
+git config --global merge.tool p4merge
+git config --global mergetool.p4merge.path "C:\Program Files\Perforce\p4merge.exe"
+git config --global mergetool.prompt false
+
+Mac - P4Merge For Mac
+
+1) Search for Helix Visual Merge Tool (P4Merge) on perforce.com
+2) Install P4Merge For Mac and make sure it can be executed from the command prompt. Add export PATH=$PATH:<P4Merge exe path on Mac> in .bash_profile. 
+3) Configure Git to set P4Merge as default diff/merge tool.
+
+git config --global diff.tool p4merge
+git config --global difftool.p4merge.path <P4Merge exe path on Mac>
+git config --global difftool.prompt false
+
+git config --global merge.tool p4merge
+git config --global mergetool.p4merge.path <P4Merge exe path on Mac>
+git config --global mergetool.prompt false
+
+------------
+
+Git Comparisons
+
+Git uses .md file for documentation like README.md (markDown formatted file).
+HEAD points to the recent commit in the current branch of local repo.
+FETCH_HEAD points to the recent fetch in the current branch of local repo. Use git merge to sync working dir to FETCH_HEAD.
+origin/HEAD points to the recent push in the current remote branch.
+difftool commands work with same syntax as diff
+
+A) Comparing Working Directory and the Staging Area
+git diff
+
+Compare using default diff tool (P4Merge)
+git difftool
+LHS (Staging Area) and RHS (Working Directory)
+
+B) Comparing Working Directory and Git Repository (Local Repo/HEAD/Last Commit)
+git diff HEAD
+
+Compare using default diff tool (P4Merge)
+git difftool HEAD
+LHS (Local Repo/HEAD/Last Commit) and RHS (Working Directory)
+
+C) Comparing between the Staging Area and the Git Repository (Local Repo/HEAD/Last Commit)
+git diff --staged HEAD
+
+Compare using default diff tool (P4Merge)
+git difftool --staged HEAD
+LHS (Local Repo/HEAD/Last Commit) and RHS (Staging Area)
+
+For file specific comparisons for all above commands use <file> parameter as below
+git diff <file>
+
+D) Comparing Between Commits
+git log --oneline --> Will display commit history in one line.
+
+git diff <commit1> <commit2> --> Compare commit1 with commit2
+git diff <commit1> HEAD --> Compare commit1 with HEAD
+git diff HEAD HEAD^ --> Compare HEAD with previous (HEAD - 1)
+LHS (HEAD) and RHS (HEAD^)
+
+If there are multiple files to compare, we need to quit difftool to move comparison to next file.
+
+E) Comparing Between Local and Remote Master Branches
+
+Below command compares master branch @HEAD (Last commit Local Repo) to origin/master branch (Remote Repo)
+git diff master origin/master
+
+Compare using default diff tool (P4Merge)
+git difftool master origin/master
+LHS (master) and RHS (origin/master)
+
+We can also compare 2 local branches
+git diff master new-local-branch
+
+------------
+
+Branching and Merging
+
+1) Directly working on a master branch is not a good practice. Always create feature braches and merge them back to master once features are stabilised.
+
+List all Local branches
+git branch
+
+List all Local and Remote branches
+git branch -a
+
+List all local branches and corresponding remote branches (Tracking branches)
+git branch -vv
+
+Creates a branch but does not switch you to that branch (Since Base branch is not specified, a new branch is created from the current branch)
+git branch <Branch-Name>
+
+Create a <New-Local-branch> from <Base-Branch>
+git branch <New-Local-branch> <Base-Branch>
+
+Checkout the new branch you just created to start using it.
+git checkout <Branch-Name>
+
+Create and Checkout the branch (Express Checkout)
+git checkout -b <Branch-Name>
+
+Rename a branch locally
+git branch -m <OLD-NAME> <NEW-NAME>
+
+Delete a branch locally
+git branch -d <BRANCH-NAME>
+
+Tip - You can not delete a current branch, Switch branch and then delete
+Tip -  With -d option you can delete only merged branch. To delete unmerged branch use option -D. -D is a forced delete.
+-d option also works when a new branch is created, nothing is commited to it and it is not merged. However, if a new branch is created and commits are made to it
+then we can not delete it without merging it back to parent branch. -D option comes to rescue here.
+
+A) Happy Path / Fast Forward Merges (No Changes in Master before we merge back)
+
+1) In Fast Forward merge, we do not preserve the fact that we branched off from master and merged back.
+2) We should not commit anything to master branch, when we are committing to new branches created from master branch and merging them back to master (Fast-forward Merge).
+3)Fast-forward merge is possible when there are no further commits in the receiving (master) branch after the commit where feature branch was created.
+4) After successful merge to master branch, you can delete feature branch.
+5) In short, fast-forward merge simply moves branch and HEAD references from one commit to another commit.
+
+Steps -- 
+a) Create a new local branch from master and commit to it
+b) Switch/checkout to master
+c) use below command to merge from src to master
+git merge <Source_Branch>
+
+Output of above command shows line below where <SHA1> is pre-merge HEAD of master branch and <SHA2> is post-merge HEAD of master branch.
+updating <SHA1>...<SHA2>
+
+Display commit history details
+git log --oneline --graph --decorate --all
+
+B) Happy Path / Disable Fast Forward Merges (No Changes in Master before we merge back)
+
+We preserve the fact that we branched off from master and merged back.
+
+a) Create a new local branch from master and commit to it
+b) Switch to master
+c) use below command to merge from src to master without Fast Forward
+git merge <Source_Branch> --no-ff
+
+C) Automatic Merges (Commit Changes to Master before we merge back)
+
+Automatic Merge and 3-Way merge are same.
+
+a) Create a new local branch from master and commit to it
+b) Switch to master and commit to master
+c) use below command to merge from src to master with automatic merge
+git merge <Source_Branch> 
+
+------------
+
+Resolving Merge Conflicts
+
+Merge conflicts do not appear in fast-forward merge. Conflicts may appear only in 3-way merge process.
+
+a) Create a new local branch from master and commit to it (file sample.html)
+b) Switch to master and commit to same file sample.html, so that there are conflicts.
+c) Now there are merge conflicts and we need to resolve them before merging.
+d) use below command to merge from src to master with automatic merge.  Automatic merge fails here!. Below command will list all the files with conflicts.
+git merge <Source_Branch> 
+
+Tip - Now we are in merge state and git status will show conflciting files as modified. However, if we abort merge using 'git merge --abort' files will be reverted back to normal state.
+
+Tip - When already in merge state, you can fix conflicts and commit fixed files. Conflicts are fixed and Merge is completed there itself!
+If you abort merge, fix conflicts, commit changes and try to merge again. Here you need to tell git explicitly that 'our' version of file is to be accepted and incoming version to be rejected! We can use command like below - 
+git merge -s recursive -X ours
+
+I think better choice is to fix conflicts in merged state itself with a handy merge-tool like Visual studio code or P4Merge and then commit changes.
+
+e) Use P4Merge as a merge tool to resolve conflicts.
+git mergetool 
+
+Above command will automatically open conflicting files in P4Merge tool.
+f) Fix conflicts in all confilcting files in P4Merge tool and commit changes.
+git commit -m "Resolved all merge conflicts".
+g) Add *.orig files in .gitignore and commit it.
+h) *.orig files are temporary merge backup files which are created to save original conflicted state so that we can revisit if required.
+
+------------
+
+Rebasing
+
+1) Rebasing is a concept where we create feature branch from the master branch, commit to both feature and master branches and then at certain point in time rebase from master to feature branch.
+2) When you are working on a feature branch on your computer, you need to merge release/master branches into your current feature branch in order to keep it up-to-date with already published features.
+3) Rebasing is basically moving base of feature branch to latest commit of master branch from which feature branch was created. This way we will have all the commits from master branch followed by the commits in feature branch.
+4) Rebasing is a destructive operation and should be used carefully. Never perform rebasing on public branches. Do it on local branches only!
+5) Merging of the feature branch into base branch using Rebasing is a two-step process. Before rebasing, fast-forward merge is not possible (only 3-way merge is possible because receiving branch has new commits)
+	a) First rebasing of feature branch is done on top of master/release branch, so that all feature commits follow master/release commits.
+	b) Then merging of feature branch back to master branch. Now fast-forward merging is performed, since there are no new commits in master/release branch.
+6) Old commits in branch being rebased are automatically deleted by Git and brand new commits are created. These new commits are copies of old commits but they are newly created.
+7) Rebasing rewrites history. It keeps history linear. Since old commits of feature branch are deleted, it doesn't keep entire history of all commits.
+
+What is difference between Merging and Rebasing?
+
+1) Merging history has commits which can have multiple parents. However, Rebasing history has commits with only one parent.
+2) With rebasing, history becomes linear. However, with merging history may be non-linear.
+3) Regular Merging - When receiving branch has commits which are ahead of ancestor commit of feature branch, then 3-way merge is possible where merge commit is created automatically by git.  
+   Rebased Merging - When merging is done by rebasing, fast-forward merge is performed and merge commit is NOT created.
+4) Merging retains history as and when actual commits were performed. In rebasing, new commits are created and history is rewritten.
+5) Merging is non-destructive operation. Rebased merging is destructive operation as old commits are deleted.
+
+
+A) Simple Rebase
+
+a) Create a new local branch from master and commit to it (file sample1.html)
+b) Switch to master and commit to different file sample2.html.
+c) Switch back to the feature branch (<Dest_Branch>)
+d) Use below command to rebase from master to the feature branch.
+git rebase <Src_Branch> (master is src) 
+
+Rewind changes happened on feature branch to state when feature branch was created.
+Then apply all the commits on master branch
+Then apply all the commits on feature branch
+Now we are in rebased state (graph is flattened) where we can fast-forward merge from feature to master. (Since there are no new commits on master)
+
+Display commit history details
+git log --oneline --graph --decorate --all
+
+B) Rebasing conflict scenario
+
+a) Create a new local branch from master and commit to it (file sample.html)
+b) Switch to master and commit to same file sample.html so that there are conflicts to resolve.
+c) Switch back to the feature branch (<Dest_Branch>)
+d) Use below command to rebase from master to the feature branch.
+git rebase <Src_Branch> (master is src) 
+
+e) At this stage, we are in a conflicting state. Use merge tool to resolve conflicts.
+git margetool
+
+f) Once all conflicts are fixed using mergetool P4Merge and we are already in Rebase state, simply run git rebase --continue
+g) Now we are in rebased state (graph is flattened) where we can fast-forward merge from feature to master. (Since there are no new commits on master)
+
+To abort rebase use
+git rebase --abort
+
+C) Pull with Rebase (GitHub)
+
+Fetch changes from the remote (origin/master)
+git fetch origin master
+
+git fetch is a non-distructive command which just updates the references between remote repo and local repo.
+git pull = git fetch + git merge
+
+If there are some changes done in the remote repo (origin/master), git status command will not show those changes.
+If we need to see those changes in git status command, we need to first fetch changes from remote to local. 
+
+Traditional merge with git pull or git merge will simply merge changes from remote to local as they happened (no changes in timeline). However,
+git pull origin master 
+
+git pull with rebase will put changes in origin/master (remote) before local commits.
+git pull --rebase origin master 
+
+D) Basic Rebasing scenario revisited
+
+STEP 1 - Rebasing
+a) Checkout feature branch - git checkout <feature-branch>
+b) Rebase feature branch on top of base branch - git rebase master
+
+STEP 2 - Merging
+a) Checkout base branch -  git checkout master
+b) Merge feature branch into base branch - git merge <feature-branch> (Fast-forward merge will be used)
+
+Tip - Rebasing can be done by squashing of Commits in GitHub. In large public repos with many collaborators, many feature branches and many pull requests technique of rebasing with squashing of Commits is applied while merging branch or pull request into main branch.
+
+------------
+
+Stashing
+
+A) Simple Stash
+
+Stashed files are files which are work-in-progress files which are not yet ready for staging or commiting.
+We stash such temporary files to save our progress and move on to other files.
+
+1) Change a file sample.html in the working directory.
+2) sample.html is work-in-progress file which is not yet ready for commit. However, I need to move to other higher priority tasks.
+3) In order to stash current state of working directory and staging area (index) give below command
+git stash
+4) Now if we check status using 'git status' command, we can see that we have a clean working directory (tree).
+5) Notice that now we do not see changes made in the stashed files. 
+6) Start working on other high priority tasks and commit related files. Now we have clean working dir/tree again.
+7) Now we can start working on stashed file where we left them.
+git stash apply
+8) We are back to work in progress status and can continue working on sample.html file.
+
+To list all the stashes 
+git stash list
+
+To drop the last stash
+git stash drop
+
+B) Stashing Untracked Files and Using Pop
+
+By default, git will stash only tracked files.
+Remember we can list all the tracked files using - git ls-files
+
+1) Change a tracked file sample.html in the working directory.
+2) Add a new file newFile.html (untracked file) in the working directory
+3) git status will show sample.html as modified and newFile.html as untracked.
+4) If we issue git stash command, it will only stash tracked file (sample.html).
+5) One way to solve this is to add newFile.html to the staging area (git add). Now, this way newFile.html will be a tracked file which can be stashed.
+6) However, we can do it without adding it to the staging area as below
+git stash -u
+-u flag will stash untracked files(not excluded by .gitignore) along with tracked files.
+
+Express git stash apply and git stash drop (works like stash stack)
+git stash pop
+
+C) Managing Multiple Stashes
+
+If we use just 'git stash' command, we are dealing with only one stash. However, to deal with multiple stashes we need to give stash message for each stash.  
+That way we can keep track of multiple stashes.
+
+1) Update 3 tracked files sample1.html, sample2.html and sample3.html and create 3 stashes (one for each file).
+
+git stash save "sample1.html - Stash 1"
+git stash save "sample2.html - Stash 2"
+git stash save "sample3.html - Stash 3"
+
+2) List all 3 stashes
+git stash list 
+
+3) Get the details of a particular stash
+git stash show <STASH-Reference>
+git stash show stash@{1}
+
+4) Retrieve/apply a particular stash
+git stash apply <STASH-Reference>
+git stash apply stash@{1}
+
+5) Drop a particular stash
+git stash drop <STASH-Reference>
+git stash drop stash@{1}
+
+6) Drop all the stashes
+git stash clear
+
+D) Stashing into a Branch
+
+When working on one branch (say master), we can stash our changes to another branch (say feature).
+
+1) Update and add few files on master branch and stash them
+git stash -u 
+
+2) Retrieve stash into another branch 'newfeature'
+git stash branch <BRANCH_NAME>
+git stash branch newfeature
+
+Below things happen when above command is executed
+	a) A new branch 'newfeature' is created
+	b) Branch is switched to new branch 'newfeature'
+    c) Stash is applied to new branch 'newfeature'
+	d) Stash is dropped. Stash is not branch-specific. When it is dropped, it is dropped for all the branches.
+
+E) Stashing can be performed Using GitHub Desktop 
+
+------------
+
+Checking Out a Specific Commit ("detached-HEAD" state)
+
+1) We can checkout a specific commit using git checkout <Commit-id>.
+2) When HEAD points to a specific commit instead of last commit of a current branch, it is called as "detached-HEAD" state. 
+3) We can retain commits made in "detached-HEAD" state by creating a new branch -> git checkout -b <new branch from detached-HEAD state>
+4) Basically we are jumping to a specific version of the project.
+5) In this state if we check commit history in GitHub Desktop or using git log command, we will see history till HEAD only.
+That means if branch points to third commit and HEAD points to second, history is shown only for 1st and 2nd commits and not for the third commit.
+6) To move pointer back to last commit of current branch - git checkout <branch>
+
+Purpose of above scenario is -
+a) Move back in time to previous revision (commit) of current branch.
+b) Do some experiments on checked-out commit.
+c) Perform commits and Create a new test-branch
+d) Obviously, we can create a new branch from last commit of current branch too. but sometimes, it might be necessary to move back in time before creating a new branch.
+e) If we perform some commits in detached-HEAD state and move back to current branch without creating a new brach from detached-HEAD state, all commits are lost!
+
+Tip - By default, unreachable git objects are garbage collected after 30 days. So commits are not immediately lost even if you switch to another branch from detached-HEAD state. You can always go back to detached-HEAD state and create a new branch to retain those commits.
+
+---------------
+
+Why do we need branches? 
+
+1) Pointers to all branches are .git/refs/heads folder.
+2) We can create multiple branches for different features from main master branch.
+3) Different developers can work simultaneously on these features or branches independently.
+4) At later point in time, these features are merged back to the main master branch.
+5) Sub-branches can be created and merged back in reverse chronological order.
+6) A new branch can be created from the last commit or any previous commit of a parent branch.
+7) There can be multiple branches in a Repo but only one HEAD. HEAD points to the last commit of currently checked out branch.
+8) No spaces in branch name.
+
+---------------
+
+How 3-Way merge works?
+
+1) 3-way merges use a dedicated commit to tie together the two histories. The nomenclature comes from the fact that Git uses three commits to generate the merge commit: the two branch tips and their common ancestor.
+2) A merge commit can have two or more parents depending on number of branches being merged.
+3) Automatic Merge and 3-Way merge are same. Commit Changes to Master before we merge back.
+
+a) Create a new local branch from master and commit to it
+b) Switch to master and commit to master
+c) use below command to merge from src to master with automatic merge
+git merge <Source_Branch> 
+
+Output of above command shows below line
+merge made by the 'recursive' strategy.
+
+While merging using 3-Way merge, one commit is created automatically. This commit is called as merge-commit. Git asks us to enter commit message for this commit. After successful merge, HEAD points to this merge-commit. 
+
+we can delete feature branch after successful merge. This will remove pointer to feature branch in git log output.
+
+---------------
+
+Installing SourceTree
+
+1) SourceTree is a tool which outlines graph of when a specific branch was created and when it was merged. 
+2) It will give output in GUI same as below command on command-line
+git log --oneline --graph --decorate --all
+3) SourceTree is available for Mac and Windows.
+4) BitBucket account registration is required for SourceTree.
+5) SourceTree has more features than GitHub Desktop.
+
+---------------
+
+What is FETCH_HEAD?
+
+1) .git folder has HEAD, FETCH_HEAD and ORIG_HEAD files.
+HEAD - Points to last local commit of currently checked-out local branch.
+FETCH_HEAD - List of last commits of all remote branches. First in the list will be remote branch corresponding to currently checked-out local branch. This first branch in the list will be used for merge operation using 'git merge FETCH_HEAD' command. 'git pull' command internally performs 'git fetch' and then 'git merge FETCH_HEAD'. Other branches in .git/FETCH_HEAD file will be listed as 'not for merge'. 
+
+------------
+
+What happens during git pull?
+
+1) During git pull, Git first executes git fetch.
+2) After fetching, it will update .git/FETCH_HEAD list and first branch in this list will be remote branch corresponding to currently checked-out local branch.
+3) Finally Git executes 'git merge FETCH_HEAD' command that finds first branch in .git/FETCH_HEAD list without "not for merge" tag and merges it into local tracking currently checked-out branch.
+4) Git Pull with Fast-Forward Merge is possible when we have not commited anything to local branch.
+5) git merge FETCH_HEAD. Here FETCH_HEAD (remote branch) is a source of merge operation and currently checked-out local branch is destination of merge. 
+
+------------
+
+Scenario with new branch creation on remote repo
+
+a) Create a new branch on remote repo say 'temp'
+b) Use git branch -r command on local repo to show remote branches. This command will NOT list origin/temp branch
+c) use git fetch on local. Now origin/temp branch will be listed for git branch -r command.
+d) git remote -vv will not show temp branch as a tracking branch.
+e) Now use git checkout temp. temp branch will be shown as a tracking branch in output of git remote -vv command.
+
+------------
+
+Creating a Remote Branch Based on a Local Branch
+Create a branch dev from master --
+
+1) Change to master branch
+git checkout master
+
+2) Create a local branch dev from master
+git checkout -b dev master
+
+3) Push the branch dev to remote
+git push -u origin dev
+
+-u, --set-upstream --> set upstream for git pull/status
+
+If we do not use -u or --set-upstream flag with git push, then we get an error - Current branch dev has no upstream branch.
+
+4) After above command (git push -u origin dev), git remote -vv command will show remote tracking branch (origin/dev) for 'dev' branch .
+5) When local branch has already corresponding remote branch, you need to simply enter "git push" to push changes to remote.
+6) If you need to push to a remote ref and branch other than default ones, then use "git push <Remote-Ref> <Branch-name>"
+
+------------
+
+Updating the Tracking Status of the Branches
+Update tracking status locally when remote branch is deleted in remote repo -- 
+
+1) Delete branch 'temp' in remote repo
+2) Use git fetch. you have to use git fetch so that remote branch is removed from output of git branch -a.
+3) After fetching observe tracking statues using git branch -vv. You will see that local temp branch still tracks remote temp branch.
+4) Update tracking statuses using - git remote update origin --prune
+5) Observe tracking statues using git branch -vv. You will see that local temp branch do not tracks remote temp branch.
+
+------------
+
+Removing a Remote Branch Using a Local Terminal
+
+1) Create a new local branch 'temp'
+2) Push this local branch to remote repo using "git push -u origin temp"
+3) Delete remote branch from local terminal -  "git push origin -d temp"
+
+------------
+
+Check Local and Remote Refs
+git show-ref
+
+Check Local and Remote Refs for a specific branch
+git show-ref <Branch-name>
+
+Local and Remote Refs are nothing but SHA1 hash ids where branch or HEAD are pointing to.
+
+------------
+
+What is a Pull Request?
+
+1) Pull request is a proposal of the potential changes.
+2) Pull request is NOT same as 'git pull' command. Pull request is a feature that combines multiple git operations.
+3) Pull request is created to propose and collaborate(review) on your changes.
+4) By default, Github allows you to merge pull requests even without reviews and approvals. But it is possible to require certain approvals before merging will be allowed.
+5) Main branches like master and release should be configured as protected branches so that direct merging without approvals is denied.  
+6) This can be done under Repo-->Settings-->Branches-->Branch Protection rules
+7) Define branch protection rules to disable force pushing, prevent branches from being deleted, and optionally require status checks before merging.
+ 
+------------
+
+Dealing with origin and upstream from local repo
+
+1) Fork a repo <My-Repo> from <Global-Repo>.
+2) Clone  <My-Repo> to local computer.
+3) Check remote references and tracking branches with --> 'git remote -v' and 'git branch -vv'  
+4) You will see that local repo is associated with Remote Ref "origin" which is reference to <My-Repo>.
+5) Add reference for upstream repo <Global-Repo> - 'git remote add upstream <Global-Repo>'
+6) Now 'git remote -v'  command will show two remote references - origin and upstream
+7) Observe output of 'git branch -a'. This command will show only branchs from local repo and origin repo. upstream repo branches are not shown.
+8) use 'git fetch upstream -v'. Now branches from upstream repo will be shown in output of 'git branch -a'
+9) After step 8, now we can perform different operations on upstream remote branches like checkout branch, merge branch etc. 
+10) To syncronise working dir and staging area with upstream we need to perform - git pull upstream <Branch-name>
+11) Now in order to sync local repo with <My-Repo> use - 'git push'. Note that here we don't have to use 'git push origin master' because local master branch is tracking origin/master. We can verify this using 'git branch -vv'. 
+12) Now local repo, <My-Repo> and <Global-Repo> all are in sync.
+
+Tip - At step 10, we could have used - git merge upstream/master or git merge FETCH_HEAD. This is possible since we have already fetch in step 8.
+During this fetch operation, FETCH_HEAD is updated to upstream/master since we are working on master brach locally.
+
+------------
+
+Scenario
+
+1) Fork a repo <My-Repo> from <Global-Repo>.
+2) Create a new branch <NB> in forked repo <My-Repo>, commit changes to this branch. (we are making all the changes directly on GitHub)
+3) Create a Pull request from <My-Repo> to <Global-Repo> to merge it directly with master branch of <Global-Repo>.
+4) Now <Global-Repo> will not have branch <NB>, but it's master branch will have all the changes from <NB> branch of <My-Repo>.
+5) <NB> branch on <My-Repo> can be deleted.
+6) A Pull request from <Global-Repo> to <My-Repo> will sync all the changes in master branch.
+
+------------
+
+Git reset - Modifies commit history - Destructive operation! Use with care. Do not use on public repos. Use only on local repos.
+
+1) Reset local repo state to previous commit by discarding some commits in git-history.
+2) By default git reset operates in Mixed mode. There are 2 other modes - Hard and Soft
+3) With git reset, you are able to reset multiple commits.
+4) Default mixed mode. 
+git reset <To-SHA1>  
+	a) Discards commit
+	b) Discards changes in staging area
+	c) Keep changes in working directory
+We can modify files in working directory to fix mistakes and recommit changes.	
+5) Soft mode 
+git reset --soft <To-SHA1> 
+	a) Discards commit
+	b) Keep changes in staging area
+	c) Keep changes in working directory
+6) Hard mode
+git reset --hard <To-SHA1>
+	a) Discards commit
+	b) Discards changes in staging area
+	c) Discards changes in working directory
+
+All locally resetted commits can be retrieved using 'git pull' command.
+7) Reset to commit after last 5 commits
+git reset HEAD~5
+
+------------
+
+Git revert - Do not modifies commit history. Not Destructive operation. Can be safely pushed to public repos.
+
+1) Git revert takes a single commit as an argument and reverts that commit.
+2) During revert operation, it creates a new commit by reverting all the changes made in old commit.
+3) Git history is not updated. We can see both new and old commits in the git history.
+4) With git revert, you are able to revert only single commit.
+5) git revert HEAD or git revert <Last-commit-SHA1>
+reverts(inverts) changes made in last commit.
+6) You can also revert intermediate commit (but only one). Note that there may be conflicts in this scenario. Fix conflicts, stage changes and then use 'git revert --continue'. use 'git revert --abort' to cancel revert operation.
+git revert <SHA1-of-commit>
+
+------------
+
+Reflog - Log of All Git Operations performed on local repo
+
+1) git reflog - Log of all opeartions in a repo
+2) git reflog show <Branch-name> - Log of all opeartions in a branch.
+3) You can move to detached-HEAD state by using commands like - git checkout HEAD@{6}, git checkout HEAD@{1}
+references like HEAD@{1} and HEAD@{6} are in output of 'git reflog'.
+4) Reflog command is very useful to get to the state (commit id) before any destructive operation was performed (like git reset). 
+5) Operations in the reflog are stored by default for 90 days. 
+
+------------
+
+Git Tagging
+
+Branch is a dynamic pointer to commit, whereas Tag is static text pointer to a specific commit.
+Like branch, we can also checkout a specific tag (detached-HEAD state). 
+As new commits are made, branch pointer moves to last commit each time. However, Tag pointer remains at the same commit.
+
+A) Simple tagging (Lightweight Tags)
+
+We can mark significant events or milestones for commits in Git repo using git tagging.
+Tag is nothing but a label that we can apply to any commit in history.
+
+Create a Lightweight Tag. This tag is applied to the last commit (HEAD) by default since no specific commit is mentioned in command.
+git tag <TAG-NAME>
+
+List all the tags
+git tag --list
+
+We can use name of tag in other commands as a reference.
+Display details of commit associated with a tag.
+git show <TAG-NAME>
+
+Delete a tag
+git tag --delete <TAG-NAME>
+
+B) Annotated Tags (Tags with information)
+
+Below command will open a default editor to annotate tag with more information
+git tag -a <TAG-NAME>
+
+Alternatively, we can also use below 
+git tag <TAG-NAME> -m "Creating Tag 1.0"
+
+C) Comparing Tags
+
+Compare commits associated with two tags
+git diff <TAG-NAME1> <TAG-NAME2>
+git difftool <TAG-NAME1> <TAG-NAME2>
+
+D) Tagging a previous commit (sometimes you forget to tag)
+
+Apply an annotated tag to previous commit. This will open an editor to annotate tag.
+git tag -a <TAG-NAME> <COMMIT-ID>
+
+E) Updating an existing commit (Sometimes you tag the wrong commit)
+
+Force tag to correct commit id. This command will move tag <TAG-NAME> from wrong <COMMIT-ID> to correct <COMMIT-ID>.
+git tag -a <TAG-NAME> -f <COMMIT-ID>
+
+F) Remote Tagging (Working with tags on GitHub)
+
+All above commands add tags to local commits only (Local Repo). We have to push these tags to remote repo to sync tags on both local and remote repos.
+
+Push single tag to remote (commit associated with tag is also pushed to gitHub)
+git push origin <TAG-NAME>
+
+To push all local tags to remote at once
+git push origin <BRANCH-NAME> --tags
+
+GitHub creates src folders in zip and tar.gz formats for each tag on remore repo.
+
+Delete a Tag on GitHub (Delete accidently pushed Tag). It will still be there on local but not on remote.
+git push origin :<TAG-NAME>
+
+Above push commands are only to push tags. It will not push other commits.
+
+------------------------------
+MISC Notes from online sources
+------------------------------
+
+Creating a local git repository from folder and linking it with remote 
+
+Shirish@LAPTOP-7B3OO6RC MINGW64 /C/git-repos
+$ cd Azure_Projects/
+
+Shirish@LAPTOP-7B3OO6RC MINGW64 /C/git-repos/Azure_Projects
+$ git init
+Initialized empty Git repository in C:/git-repos/Azure_Projects/.git/
+
+Shirish@LAPTOP-7B3OO6RC MINGW64 /C/git-repos/Azure_Projects (master)
+$ git remote -v
+
+Shirish@LAPTOP-7B3OO6RC MINGW64 /C/git-repos/Azure_Projects (master)
+$ git remote add origin https://github.com/shirishphatangare/Azure_Projects.git
+
+Shirish@LAPTOP-7B3OO6RC MINGW64 /C/git-repos/Azure_Projects (master)
+$ git remote -v
+origin  https://github.com/shirishphatangare/Azure_Projects.git (fetch)
+origin  https://github.com/shirishphatangare/Azure_Projects.git (push)
+
+Shirish@LAPTOP-7B3OO6RC MINGW64 /C/git-repos/Azure_Projects (master)
+$ git add .
+
+Shirish@LAPTOP-7B3OO6RC MINGW64 /C/git-repos/Azure_Projects (master)
+$ git commit -m "Adding Azure Notes initial version"
+[master (root-commit) 48dd275] Adding Azure Notes initial version
+ 1 file changed, 1 insertion(+)
+ create mode 100644 Azure_Notes.txt
+
+Shirish@LAPTOP-7B3OO6RC MINGW64 /C/git-repos/Azure_Projects (master)
+$ git push
+fatal: The current branch master has no upstream branch.
+To push the current branch and set the remote as upstream, use
+
+    git push --set-upstream origin master
+
+Shirish@LAPTOP-7B3OO6RC MINGW64 /C/git-repos/Azure_Projects (master)
+$ git push --set-upstream origin master
+Counting objects: 3, done.
+Writing objects: 100% (3/3), 248 bytes | 248.00 KiB/s, done.
+Total 3 (delta 0), reused 0 (delta 0)
+To https://github.com/shirishphatangare/Azure_Projects.git
+ * [new branch]      master -> master
+Branch 'master' set up to track remote branch 'master' from 'origin'.
+
+Shirish@LAPTOP-7B3OO6RC MINGW64 /C/git-repos/Azure_Projects (master)
+$ git status
+On branch master
+Your branch is up to date with 'origin/master'.
+
+nothing to commit, working tree clean
+
+------------------------------------------------------------------------------
+
+Clone the repository.
+git clone <Repo-URL>
+
+
+If some branch is not there in local repository
+git fetch --all 
+git checkout <Branch-Name>
+
+
+Get the status of your local repository.
+git status
+
+"git checkout -- <file>..." to discard changes in working directory
+
+Moves changes from the working directory to the Git staging area
+git add <File-Name>
+git add -A  --> stages all changes
+git add .   --> stages new files and modifications, without deletions
+git add -u  --> stages modifications and deletions, without new files
+
+To unstage
+git reset HEAD
+
+------------------------------------------------------------------------------
+
+To Commit - Takes the staged snapshot and commits it 
+git commit -m 'Initial commit'
+git commit <File-Name> -m 'making a change in a branch'
+
+Up until this point, everything you have done is on your local system and invisible to your remote repository until you push those changes.
+Git's collaboration model gives every developer their own copy of the repository, complete with its own local history and branch structure. 
+Users typically need to share a series of commits rather than a single changeset. 
+Instead of committing a changeset from a working copy to the central repository, Git lets you share entire branches between repositories.
+Publish local history by "pushing" branches to other repositories. You see what others have contributed by "pulling" branches into your local repository.
+
+Send your committed changes to remote repository. This command specifies that you are pushing to the target branch on origin (the remote server).
+git push origin <Branch-Name>
+
+To pull all the changes from remote  
+git pull origin <Branch-Name>
+
+Branches are most powerful when you're working on a team. 
+You can work on your own part of a project from your own branch, pull updates from Bitbucket, and then merge all your work into the main branch when it's ready. 
+It's important to understand that branches are just pointers to commits. When you create a branch, all Git needs to do is create a new pointer—it doesn’t create a whole new set of files or folders. 
+
+Creates a branch but does not switch you to that branch
+git branch <Branch-Name>
+
+Checkout the new branch you just created to start using it.
+git checkout <Branch-Name>
+
+Make changes in a file in checked-out branch and save it --- git status --- git add <File-Name> --- git commit <File-Name> -m 'making a change in a branch'
+Merge the changes back into the master branch. (Local branch to Local Master Merge)
+Since you created only one branch and made one change, use the fast-forward branch method to merge. 
+You can do a fast-forward merge because you have a linear path from the current branch tip to the target branch.
+
+1)  Navigate to the top level of your local repository. --- cd <Local-Repo-Path>
+2)  Enter the git status command to be sure you have all your changes committed and find out what branch you have checked out. --- git status
+3)  Switch to the target branch. --- git checkout <Target-Branch-Name>
+4)  Merge changes from the source branch into the target branch --- git merge <Source-Branch-Name>
+5)  You can delete the branch, it it is no longer needed --- git branch -d <Source-Branch-Name>
+To delete a remote branch you can use the command ---        git push origin --delete <branch_name>
+
+Now our local Target-Branch is ready and we need to push local <Target-Branch> to Remote <Target-Branch>
+
+How to push your change to the remote repository -- git push origin <Target-Branch>
+
+
+To undo a merge:
+git merge --abort
+
+Git clean - If you want to see which files will be deleted 
+git clean -n
+
+Git clean - when you are comfortable
+git clean -f
+
+
+git config --global --list
+git config --global user.name "Shirish Phatangare (OSV)"
+git config --global user.email "shirish.phatangare.osv@fedex.com"
+
+--------------------------------------------------------------------------
+When LDAP password changes and  getting access denied error
+Clear old password using below command 
+git config --system --unset credential.helper
+and then provide new password when prompted
+
+Actaully there is no need to remove/unset credential.helper property, simply change password in Windows Credential Manager as below --
+
+When git password changes, update git Credentials stored in Windows Credentials in >> Control Panel\All Control Panel Items\Credential Manager
+Just in case git giving prompts, add credential.helper as manager to read credentials from Credential Manager
+git config --system --add credential.helper manager
+
+--------------------------------------------------------------------------
+
+
+Stashing takes the dirty state of your working directory — that is, your modified tracked files and staged changes — and saves it on a stack of unfinished changes that you can reapply at any time.
+git stash
+
+
+1) Team --- Synchorinise with workspace -- Select destination as remote/origin/<Branch> -- Select both fetch and compare checboxes and click finish) -- Resolve All Confilcts
+2) Commit code using git commit
+3) Use git pull origin <Branch-Name> or git merge
+4) Work on local
+5) add - commit and push local changes to remote
+
+
+# fetch the changes from the remote
+git fetch origin
+
+# show commit logs of changes
+git log master..origin/master
+
+# show diffs of changes
+git diff master..origin/master
+
+# apply the changes by merge..
+git merge origin/master
+
+# .. or just pull the changes
+git pull
+
+
+Pull branch from fork
+
+git remote add fork <url of fork>
+git fetch fork
+git checkout -b fork_branch fork/<branch>
+
+
+Local repo associations with remote
+
+Remove Association with upstream
+git branch --unset-upstream
+
+Set Association with upstream
+git branch --set-upstream-to=origin/<Branch-Name>
+
+The current branch offshore-dev has no upstream branch.
+To push the current branch and set the remote as upstream, use --
+
+git push --set-upstream origin offshore-dev
+
+--------------------------------------------------------
+
+create a new repository on the command line
+
+echo "# dfd" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/shirishphatangare/dfd.git
+git push -u origin main
+
+--------------------------------------------------------
+
+push an existing repository from the command line
+
+git remote add origin https://github.com/shirishphatangare/dfd.git
+git branch -M main
+git push -u origin main
+
+--------------------------------------------------------
+
+When do you need to overwrite local files?
+
+If you feel the need to discard all your local changes and just reset/overwrite everything with a copy from the remote branch then you should follow this guide.
+Important: If you have any local changes, they will be lost. With or without --hard option, any local commits that haven’t been pushed will be lost.
+If you have any files that are not tracked by Git (e.g. uploaded user content), these files will not be affected.
+
+To overwrite your local files do:
+
+git fetch --all
+git reset --hard <remote>/<branch_name>
+
+
+It’s worth noting that it is possible to maintain current local commits by creating a branch from master or whichever branch you want to work on before resetting:
+
+For Example:
+
+git checkout master
+git branch new-branch-to-save-current-commits
+git fetch --all
+git reset --hard origin/master
+
+To remove the last commit from git
+git reset --hard HEAD^
+
+To remove the last two commits
+git reset --hard HEAD~2
+
+
+-------------------------------------------------------------------------
+
+To resolve conflicts manually and merge/pull ours verion
+
+git merge --strategy-option ours origin offshore-dev
+git pull --strategy-option ours origin offshore-dev
+
+-------------------------------------------------------------------------
+
+To resolve conflicts manually and merge/pull theirs verion
+
+git merge --strategy-option theirs origin offshore-dev
+git pull --strategy-option theirs origin offshore-dev
+
+----------------------------------------------------------------
+
+
+Merge one repository to other repository
+
+cd <Dest-repo>
+git remote add old-repo <Src-repo>
+git remote update
+git merge --allow-unrelated-histories old-repo/development
+git push origin development
+
+-----------------------------------------------------------------
+
+
+Github create empty branch
+
+git checkout --orphan empty-branch
+git rm -rf .
+git commit --allow-empty -m "root commit"
+git push origin empty-branch
+
+-----------------------------------------------------------------
+Rename branch
+
+git branch -m old_branch new_branch         # Rename branch locally    
+git push origin :old_branch                 # Delete the old branch    
+git push --set-upstream origin new_branch   # Push the new branch, set local branch to track the new remote
+
+------------------------------------------------------------------
+
+git tags
+
+Listing tags -  git tag -l -n3
+Create tags - git tag -a RELEASE-v1.0.0 -m "Releasing version v1.0.0"
+Deleting tags - git tag -d <tag_identifier>
+Publishing tags - git push origin <tag_identifier>
+
+--------
+
+warning: you may want to set your merge.renamelimit variable to at least 2507 and retry the command.
+
+git config merge.renameLimit 2507
+git config --unset merge.renameLimit
+
+
+------------------------------
+
+Office Git Notes
+
+List the current configured remote repo associated with local Repo (fork)
+git remote -v
+
+Show more details for remote repo
+git remote show <REMOTE-REF>
+
+Specify new remote upstream repo that will be synced with local Repo (fork)
+git remote add upstream <NEW-GIT-REPO-URL>
+
+Remember that above command will add new reference 'upstream' for new repo. Existing reference and repo will not be replaced here
+We can confirm this using below command
+git remote -v
+
+'git remote -v' lists two separate urls as fetch and push. We can have different Repos for fetch and push as below
+git remote set-url --push origin <NEW-PUSH-GIT-REPO-URL>
+
+Above command changes push git repo, which can be verified again with 'git remote -v' command.
+
+Rename remote reference (Rename origin to upstream)
+git remote rename <OLD-REF> <NEW-REF>
+git remote rename origin upstream
+
+------
+
+Fetch/pull/push commands
+
+git fetch <Remote-Ref> <Branch-Name>
+git push <Remote-Ref> <Branch-Name>
+git pull <Remote-Ref> <Branch-Name>
+
+For e.g.
+git pull origin master
+
+---
+
+Compare local file with remote file on command prompt
+git diff <Remote-Ref> <Branch-Name> -- <local-file-path>
+
+or simply (to compare a given local file with same file in default remote repo)
+git diff <local-file-path>
+
+---
+
+Create multiple Forks of a GitHub Repo
+
+step 1 - Clone the original repo to your local machine
+git clone <GIT-REPO-URL> <App-name>
+
+Step 2 - Create a new empty repo in your GitHub account and name it as <App-name>
+
+Step 3 - Check the default remote links of the cloned repo (in Step 1)
+cd <App-name>
+git remote -v
+
+Step 4 - Rename default 'origin' to 'upstream' and add newly created empty repo (in Step 2) as the 'origin'
+git remote rename origin upstream
+git remote add origin <NEW-EMPTY-REPO-URL>
+git remote -v
+
+Step 5 - Push from your local repo to your new remote (origin)
+git push -u origin <Branch-Name>
+
+Note that this newly created repo is just a copy of original fork and it do not behave as a fork for pull requests.
+
+----
+
+While pulling files from remote, if there are any merge conflicts
+
+1) Abort merge
+git merge --abort
+
+2) Fix merge conflicts and commit changes
+git commit
+
+3) Now pull from remote, but now tell git to prefer local version (ours) of conflicting files over incoming files.
+git pull -s recursive -X ours <Remote-Ref> <branch_name>
+
+or simply (for default repo and branch)
+git pull -s recursive -X ours
+
+------
+
+Working on different branch instead of forking
+
+1) Clone from branch <Branch1> on <Git-Repo>
+git clone <Git-Repo> -b <Branch1> <App-Name>
+
+2) Create a new local branch from base branch
+git branch <New-Local-branch> <Branch1>
+
+3) See all local and remote branches
+git branch -a
+
+4) Switch to newly created branch
+git checkout <New-Local-branch>
+
+5) Push new branch to remote
+git push -u origin <New-Local-branch>
+
+-u, --set-upstream    set upstream for git pull/status
+
+---------------------------------------------------------------------------------------------------
