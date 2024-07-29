@@ -1,0 +1,219 @@
+Pivotal Cloud Foundry sits between application and cloud provider and makes it easy for developers to push apps to cloud without much
+experience/knowledge/setup of Cloud technologies. 
+
+PCF layer is PaaS (Platform as a Service)
+Cloud is IaaS (Infrastructure as a Service)
+
+Application <--> PCF <--> Cloud Provider (AWS/GCP/On-prem)
+
+Roles like Auditor, Manager, developer can be assinged at org/space level to control access to features.
+
+PCF as PaaS - Platform as a service
+    a) Platform is anything you can leverage to accomplish a task.
+    b) Windows, Unix, Mac are well known platforms.
+    c) PCF provides a platform with Buildpack, JRE, JVM to deploy a jar/image to cloud.
+    d) PCF Platform has cloud infrastructure underneath, so it provides all the benefits of cloud.
+
+PCF is now called Tanzu
+Install pcf-dev on local to play with PCF locally
+------------------
+CF CLI Commands
+
+cf login --> Login to CF with default Target Org/Space
+cf target -o -s --> Change CF Target Org/Space
+cf push <app-name> --> To push app to PCF
+cf push <app-name> --random-route --> Use this if you don't care about routes - Route name should be unique globally
+cf push <app-name> -p <jar file to be deployed> --> This will use Java buildpack to deploy - Buildpack creates a droplet which is ultimately deployed to PCF.
+cf logs <app-name> --> Check logs for the app
+cf apps --> Display deployed apps details
+cf routes --> Get routes details
+cf map-route <app-name> <domain-name> --hostname <host-name> --> Maps new route to app
+cf spaces --> List spaces in current org
+cf orgs --> List all orgs
+cf start <app-name> --> Starts an app deployed in PCF
+cf stop <app-name> --> Stops an app deployed in PCF
+cf restart
+cf restage --> Apply changes to all running instances
+cf env <app-name> --> To get the system/user provided environment for a specific app.
+cf set-env <app_name> <env_key> <env_value>
+cf unset-env <app_name> <env_key>
+cf help <command-name> --> Get help for the specific command
+cf logs <app-name>
+cf logs <app-name> --recent --> To see recent app logs
+cf scale <app-name> -i <no-of-instances> --> Scale app to defined no. of instances.
+cf install-plugin <path-of-binary>
+cf events <app-name> - Watch events for a specific app
+cf network-policies - Display network policies
+cf marketplace --> List services from marketplace
+--------------------
+cf create-service <service> <plan> <service-instance-name> --> Creates a new service in target org/space
+cf bind-service <app-name> <service-instance-name> --> binds a service instance to an app
+cf services --> Display list of services in target org/space (like autoscalar, dynatrace, DB etc.)
+
+When we define 'services' in manifest file, service is bound to app automatically after the deployment 
+--------------------
+a) Application manifest - Manifest.yml - config file for all deployment options like target jar, buildpack etc.
+b) cf create-app-manifest <app-name> --> Look for the config of deployed app and create a manifest file.
+c) If manifest file is present in the folder we don't have to give options to commands. Like cf push will work without <app-name>.
+d) A manifest yaml file can have configuration for multiple apps (like say frontend and rest api) and cf push will push both the apps. With such a setup, we can push specific app using - cf push <app-name>
+
+e)If we want to run an app with low memory, we can reduce memory in manifest file as below - 
+
+More information - https://github.com/cloudfoundry/java-buildpack/issues/663
+
+memory: 512M
+env:
+    JAVA_OPTS: '-XX:ReservedCodeCacheSize=32M -XX:MaxDirectMemorySize=32M'
+    JBM_CONFIG_OPEN_JDK_JRE: '[memory_calculator: {stack_threads: 30}]'
+
+f) While converting spring properties to CF env, replace dots with underscores. Leave dash as it is.
+Example - spring.jpa.hibernate.ddl-auto --> spring_jpa_hibernate_ddl-auto
+
+g) External manifest.yml file can be provided to 'cf push' command with -f option.
+h) Manifest.yml files are very useful for automated CI/CD pipelines.
+--------------------
+To deploy PCF app
+
+    a) Build a jar - mvn clean package
+    b) Create a manifest file - manifest.yml
+    c) Deploy with cf push
+
+If we don't mention Buildpack in manifest file, all buildpacks are downloaded to determine the right buildpack. So it is always efficient to mention Buildpack in the manifest file.
+
+Deployment flow in PCF
+    a) Process starts with using cf push
+    b) CloudController receives push event and metadata
+    c) CloudController receives raw source code and stores it in BLOB.
+    d) CloudController initiates app startup
+    e) CloudController selects DEA (Droplet Execution Agent) for the app
+    f) DEA uses buildpack information to start app
+    g) DEA streams out app information around
+    h) DEA creates an image of app (Droplet) and stores it in BLOB.
+--------------------
+
+Cf Push details
+
+a) Upload package (source code and manifest.yml)
+b) Staging
+    i) Determine the right buildpack(s)
+    ii) Run the buildpack(s) to create a Droplet (Droplet is a CF unit of execution. It contains Java runtime to run jar and config to connect to different services like DB connection string)
+c) Deployment of droplet into a cell (PCF virtual server)
+
+cf v3-droplets <app-name> --> List droplets of app
+
+--------------------
+Cloud Foundary Spring auto re-configuration
+
+If your spring app requires services such as relational db or messaging system, you might be able to deploy your app to cloud foundary 
+without changing any code. Cloud foundary automatically reconfigures relevant bean definitions to bind them to cloud services.
+
+If you have custom config for a service defined for the app, Cloud Foundary Spring auto re-configuration ignores that config.
+We can override this behavior using 2 connector jars in a spring app and define a bean for 'cloud' profile with a custom config.
+
+a) Adds 'cloud' profile
+b) Exposes cloud foundary properties to app
+c) Re-writes bean definitions to connect with services bound to app
+
+--------------------
+PCF UI
+
+a) PCF UI has 'Processes and instances' section which is categorized into 'web' and 'task' sections. If any event (like App crash) happens, then a custom task can be defined to take action on those events.
+b) 'web' section is for web apps, whereas 'task' section is for ont-time tasks like batch jobs. Tasks in PCF can be thought of Cloud functions which can be triggered in response to events. Equivalent of Amazon Lamda/Azure Functions.  
+c) Scheduled jobs and tasks(one time jobs) can be defined for an app.
+d) Left side panel will display 'Spring Boot' settings(trace/threads) only if app has actuator dependency included.
+e) By configuring actuator endpoint in a spring boot app and reading env variables from '/manage/env' endpoint of actuator, we can get instance specific info (ids/ips) for a response.
+f) Services like Service Registry(Naming server) are available in marketplace on PCF UI.
+g) Security groups settings for an app deployed in PCF is a collection of egress rules that specify one or more individual protocols, ports and destinations. Egress traffic is a commonly used term that describes the amount of traffic that gets transferred from an organization's host network to external networks.
+
+note - ingress refers to data entering a system or network, while egress refers to data leaving a system or network.
+--------------------
+
+1) Typical PCF User Request Flow
+User --> LoadBalancer --> GoRouter --> PCF Cell --> PCF app
+2) Distributed tracing can be enabled on a PCF app by using spring-cloud-starter-sleuth dependency. This will help us trace end-to-end flow of any request across different microservices. Sleuth dependency will add a common traceId for different requests in a flow.
+
+--------------------
+App Autoscalar CLI Plugin
+
+Install App Autoscalar CLI Plugin on mac/windows to use autoscalar for PCF.
+cf install-plugin <path-of-downloaded-binary>
+
+cf autoscaling-apps --> List of apps where autoscaling is enabled
+cf enable-autoscaling <app-name> --> Enable autoscaling for a specific app
+cf disable-autoscaling <app-name> --> Disable autoscaling for a specific app
+
+--------------------
+Routing service
+
+There are 2 types of service instances - a) managed and b) user-defined.
+For a user-defined service to be available for binding, only requirement is that it should implement service broker API.
+
+A Route service can be used to intercept requests to deployed services/apps. This can be used for cross-cutting concers(like logging).     a) Create a spring boot app which intercepts and logs an incoming request. Register this service as user provided service.
+        cf create-user-provided-service <service-name> -r <route-name>
+    b) Bind route service with other apps to be intercepted.
+        cf bind-route-service <domain> --hostname <app-host-name> <route-service-name>
+        cf unbind-route-service <domain> --hostname <app-host-name> <route-service-name>
+    c) Routing service Logs the request details and forwards it to the intended service.
+--------------------
+
+PCF Health Checks
+1) PCF supports 3 types of health checks - port,http and process. By default PCF has 'port' type of health check.
+2) You can define a custom health check endpoint of type 'http'
+cf set-health-check <app-name> http --endpoint <health-endpoint>
+
+--------------------
+Direct communication between containers
+
+1) Typical PCF User Request Flow
+User --> LoadBalancer --> GoRouter --> PCF Cell --> PCF app
+
+2) However, we can setup a direct communication between containers of different services
+Cell of service 1 --> Cell of Service 2 (no LoadBalancer/GoRouter).
+
+    cf set-env <app-name> spring.cloud.services.registrationMethod direct
+
+Be default, value of 'spring.cloud.services.registrationMethod' env variable is 'route'.
+
+3) Next step is to add a network policy to enable communication between services in separate containers.
+
+    cf add-network-policy <source-app-name> --destination-app <dest-app-name>
+    cf remove-network-policy <source-app-name> --destination-app <dest-app-name> --protocol <protocol> --port <port>
+
+--------------------
+
+Deploy Docker images/containers to PCF
+
+cf push <app-name> --docker-image <docker-image-path> --random-route
+
+While deploying a docker image Java Buildpack is not used, so manifest file is not required.
+
+--------------------
+
+Blue-Green Deployments in PCF for zero downtime
+
+We can have multiple routes mapped to one app in PCF. Blue-Green deployments make use of this fact.
+
+Steps in Blue-Green Deployment
+
+a) Blue app V1 is currently deployed to PCF with route R1.
+b) Green app V2 is updated version of the app.
+c) Green app V2 is built and deployed to PCF with a temporary route R2.
+d) Green app V2 is mapped to exisiting route R1. Now R1 is mapped to both apps.
+e) In this state traffic for route R1 is being servered by both the apps.
+f) Slowly all traffic moves to newly deployed Green app V2 for route R1.
+g) Old app Blue app V1 is unmapped for route R1 and deleted.
+h) Green app V2 is unmapped from temporary route R2.
+--------------------
+
+Centralised Config server for PCF
+
+1) PCF provides a config server service in marketplace.
+
+cf create-service p-config-server trial <service-name> -c <config-server-config-json-name>
+
+2) Communication between custom spring boot apps and PCF services like config server/service registry is secured by an OAuth authentication. Internally an OAuth token is generated for each request.
+
+
+
+
+
