@@ -1,0 +1,393 @@
+Splunk
+
+Splunk is a sw platform to search, analyze and visualize the machine-generated data gathered from the websites, applications, sensors, devices etc. Splunk is a SIEM (Security Information and Event Management) tool used by SOC (Security Operations Center) teams.
+
+---------------
+
+---SPL----    
+
+1) SPL (Search Processing language) is based on the Unix pipeline and Standard Query Language (SQL).
+2) SPL works generic to specific search from left-to-right.
+3) The chaining of commands in SPL is called the search pipeline.
+4) This SPL give us raw data -> 
+    index=_internal sourcetype=splunk*
+5) Real-time searches are resource intensive. Use them sparingly.
+6) The Last 15 minutes time-range picker preset in SPL
+    earliest=-15m latest=now 
+    
+---Reports----    
+
+7) Splunk reports are saved searches which can be shared to others or used as a dashboard panel. Reports can be scheduled periodically and perform an action upon completion, such as sending an email with the report results.
+8) Reports can be configured to display search results in a statistical table, as well as visualization charts.
+9) A report is created using the SPL (search results -> Save As Report) or through a Pivot (New pivot -> Save As Report).
+10) In addition to search acceleration, faster search results on large amounts of data can be achieved through summary indexing.
+11) With summary indexing, you run a scheduled search and output the results into a different index, often called summary, allowing searches against pre-aggregated and stored historical data in the interest of performance. 
+
+---Dashboards----    
+
+12) There are 3 types of dashboards - 
+    i) Dynamic form-based dashboards
+    ii) Real-time dashboards
+    iii) Dashboards as scheduled reports - Can be sent as an email attachment
+13) A Dashboard is created using the SPL (search results -> Save As Dashboard) or through a Pivot (New pivot -> Save As Dashboard).
+14) Each dashboard panel will have three setting options to work with: edit search, select visualization, and visualization format options.
+15) Steps to create Dynamic form-based dashboard 
+    i) Create a dashboard layout with panels
+    ii) Modify the visualization in each panel
+    ii) Make dashboard layout dynamic and interactive by adding different form inputs
+16) There will be times when you will need the same visualization for a different set of data. A very quick way of doing this is by cloning previously created panels.
+
+---DataModels, DataSets and Pivots----
+
+17) Pivots can be a powerful tool to expose Splunk to business users who are data savvy, but perhaps initially resist learning to write Splunk commands to extract value from data. In short, Pivot tool can be used to create reports/dashboards using DataModel (No SPL!).
+18) To enable pivots, a data model needs to be created. A data model is used by the Pivot editor to create analyses, reports, and dashboards.
+19) A data model is a hierarchical mapping of data based on search results. The Pivot tool visualises an output of the data model's underlying search queries as a set of rows and columns in a spreadsheet.
+20) Data model is a form of the Knowledge Object which is based on Datasets (Root Event). The Root Event or Root Search is the base search that will populate the data for the entire data model tree (data model hierarchy).
+21) Attributes or fields that are generic to all data regardless of search constraints need to be created in the root object. These initial attributes will be inherited by all child objects.
+22) When you enable acceleration for a data model, Splunk internally pre-summarizes the data defined by the data model for a given time range. This gives a tremendous boost to the search speed for your data model when searches are executed within the given time range.
+23) Data Model can not be edited once accelerated. Disable acceleration in order to edit the Data Model.
+
+---Splunk HEC----
+
+24) The Splunk HTTP event collector (HEC) can be used to send data directly from an application to Splunk in the form of HTTP events.
+25) We can send HTTP events to Splunk using cURL command. Similarly an app can send events to Splunk.
+
+curl -k https://localhost:8088/services/collector -H 'Authorization: Splunk e848d8a2-43f4-446c-af9c-e5cd8d7b26a1' -d '{"event":"Mobile Device Event - Something happened"}'
+
+26) We need to enable the HEC in Splunk and create a token used as an authorization to process the request. 
+27) HEC functionality can be enriched by using an index acknowledgement. It confirms that the event was successfully received and indexed by Splunk. 
+-------------------
+
+A) Filtering Searches with phrases examples
+
+    a) If you have a phrase containing a white space, enclose it with quotation marks
+        index=main "iPhone OS" 
+    b) Below esample will search for path "/booking/confirmation" in _raw data from main index
+        index=main /booking/confirmation
+    c) AND is silent in SPL 
+        index=main /booking 200 is equivalent to index=main /booking AND 200     
+    d) You can use combination of AND and OR with parenthese for clarity in search
+        index=main (/booking OR /destinations) AND 200 
+    
+-------------------
+
+B) Filtering Searches with fields examples
+
+    a) A search using a specified field is generally considered faster than a full text search because the filtering is occurring on a known field rather than searching through the entire event to find the value.
+    b) Fields searches are case-sensitive.
+    c) Filtering using fields will only work if there is a defined field. We can explicity extract a field from data.
+    d) Example of a typical search with fields (http_uri and http_status_code)
+        index=main http_uri=/booking/confirmation AND http_status_code=200
+    
+-------------------
+
+C) Search Command - stats
+
+    a) A common use of the stats command is to count events.
+    b) Count of all events in last 30 mins
+        index=main earliest=-30m latest=now | stats count 
+    c) Group counts by fields
+        index=main | stats count by http_method
+    d) The true format of a stats command is stats function(X)    
+    e) You can also use the avg(X) function to get the average value of all the events based on URLs.
+        index=main | stats count by http_uri | stats avg(count)
+    f) Some of the widely used stats functions are:
+
+        avg(X): Returns the average of the values of the field X
+        dc(X): Returns the count of distinct values of the field X
+        max(X): Returns the maximum value of the field X
+        min(X): Returns the minimum value of the field X
+        perc<X>(Y): Returns the Xth percentile of the field X, for example perc95(X)
+        sum(X): Returns the sum of the values of the field X    
+    
+-------------------
+
+D) Search command – top/rare   
+    
+    a) top - Top 10 (limit=10 by default) most likely events
+        index=main | top http_uri
+
+    b) rate - Rare 10 (limit=10 by default) most unlikely events
+        index=main | rare http_uri
+
+    c) By default top/rare commands will group results by given param and add count and percentage columns in the result.
+
+    d) You may further tweak this search command by adding command options such as limit and showperc
+        index=main | top url limit=5 showperc=false 
+    
+-------------------
+
+E) Search commands – chart and timechart    
+
+    a) The chart command aggregates data, providing output in tabular format which can then be used for a visualization.
+
+    b) Below query is identical to the output of the stats command
+        index=main | chart count by http_method 
+
+    c) For all basic purposes, you can use stats and chart interchangeably. However, there will be differences in how stats and chart group data together.   
+
+    d) The timechart command, creates a time series output with statistical aggregation of the indicated fields. This command is widely used when creating different types of charts where X-axis of the visualization is time.
+
+    e) Below query creates an output with time-span of 15 mins.    
+        index=main earliest=-4h latest=now | timechart span=15m count by http_uri
+
+    f) The most common use of timechart is for examining the trends of metrics over time for visualizations including line charts, column charts, bar charts, and area charts, among others.
+
+    e) When presenting visualizations using the timechart command, Splunk will limit the number of distinct output values to the default of 10, and group remaining results into an 11th data element of OTHER. Adding limit=0 after the timechart command will force Splunk to present all distinct output values.
+    
+-------------------
+
+F) Search command – eval 
+
+    a) eval allows you to store the resulting value of the eval operation in a field. A myriad of functions can be used with eval.
+
+    b) eval for if/then/else 
+
+    eval newfield=if(condition, field1, field2)
+    
+    Example 1 - 
+    If URI contains NY or MIA or MCO then set Region to "East" else "Others". Then list the newly created Region field and http_uri for all events, and sort by Region 
+    
+    index=main http_uri="/destination/*/details" 
+     | eval Region=if(match(http_uri, "NY|MIA|MCO"), "East", "Others") 
+     | top 0 Region, http_uri | sort Region
+
+    Example 2 - 
+    if http_status_code < 400 then count it as 1 successful_request, else ignore it (NULL).
+    if http_status_code >= 400 then count it as 1 unsuccessful_request, else ignore it (NULL).
+
+        index=main earliest=-1h latest=now | stats count(eval(if(http_status_code < "400", 1, NULL))) AS successful_requests count(eval(if(http_status_code >= "400", 1, NULL))) AS unsuccessful_requests by http_status_code
+
+    c) eval with round(X, Y) function
+
+    With below SPL, Percent column will be rounded to the nearest integer with two decimal values
+        index=main | top http_uri | eval percent=round(percent, 2)
+
+    d) eval with upper function
+    With below SPL, transform the URL strings into uppercase    
+        index=main | top http_uri | eval http_uri=upper(http_uri)
+
+    e) eval with case function - a new col Tag will be added to the result and categorised based on case for http_uri
+    
+    eval newfield=case(Condition1, "Label1", Condition2, Label2", ConditionX, "LabelX")
+    
+    Example 1 - 
+    index=main | top http_uri showperc=false | eval Tag=case(http_uri=="/booking/payment", "Payment", http_uri="/auth", "Authorization")
+    
+    Example 2 - 
+    
+    index=main http_uri="/destination/*/details" 
+         | eval Region=case(match(http_uri, "NY|MIA|MCO"), 
+           "East", match(http_uri, "WAS|AK|LAX|PML"), "West", 
+           match(http_uri, "HOU"), "Central") 
+         | top 0 Region, http_uri | sort Region
+    
+-------------------
+
+G) Search command – rex
+
+    a) The rex or regular expression command is extremely useful when you need to extract a field during search time that has not already been extracted automatically.
+    
+    index=main | rex field=http_user_agent "Chrome/(?<Chrome_Version>.+?)?Safari" | top Chrome_Version 
+    
+    b) Generally, it is a good idea to create a Splunk field extraction so that the regular expression logic can be stored in one place and reused in searches like any other field.
+    
+-------------------
+
+H) Data classification with Event Types
+
+    a) An Event Type is a grouping or classification of events meeting the same search criteria.
+    
+    index=main http_uri=/booking/confirmation http_status_code=200 - Event Type can be created of this SPL "Good_Bookings"
+    index=main http_uri=/booking/confirmation http_status_code=500 - Event Type can be created of this SPL "Bad_Bookings"
+    
+    b) While creating an event type, select 5 as the priority. Priority here determines which style wins if there is more than one Event Type. 1 is the highest and 10 is the lowest.
+    
+    c) With above 2 event types created, we can now search with SPL - eventtype=*bookings. It will list both the events with diffrent colors.
+    
+    d) You cannot create an eventtype that consists of a piped command or subsearches. Only base commands can be saved as an Event Type.
+    
+    e) You can add more search logic to event type searches, using piped commands
+    
+        eventtype=*bookings | stats count by eventtype
+    
+-------------------
+
+I) Data Normalization with Tags
+
+    a) Tags in Splunk are useful for grouping events with related field values. Unlike Event Types, which are based on specified search commands, Tags are created and mapped to specific field-value combinations. Multiple Tags can be assigned to the same field-value combination.
+
+    For Example, An event type 'destination_details' is defined for http_uri=/destination/*/details and Tags defined as below 
+
+           Field = value                |     Tags
+    http_uri = /destination/LAX/details	| major_destination
+    http_uri = /destination/NY/details	| major_destination
+    http_uri = /destination/MIA/details	| home
+    http_status_code = 301	            | redirect
+    http_status_code = 404	            | not_found
+
+    We can simplify search with SPL as
+
+    index=main eventtype=destination_details tag=major_destination tag=not_found 
+    
+-------------------
+
+J) Data enrichment with Lookups
+
+    a) In Splunk, you can enrich event data using Lookups, which can pair numbers or acronyms with more understandable text descriptions found in a separate file.
+
+    b) Having the Lookup execute at search run time also optimizes the need to index verbose descriptions that consume additional index space.
+
+    c) You need to add Automatic Lookups settings for lookups to happen automatically without using lookup keyword.
+
+    d) If there are values in the raw event data without a corresponding match in the lookup file, they will be dropped by default when summarizing by Lookup values.
+
+Event Types, Tags and Lookups are essential elements you need to use Splunk in an efficient manner.
+    
+-------------------
+
+K) Splunk Best Practices And Tips
+
+a) Using the fields command is a great way to improve search performance after the results have been proven to be accurate.
+
+index=main http_uri=/booking/reservation http_status_code=200 | stats count by http_user_agent
+index=main http_uri=/booking/reservation http_status_code=200 | fields http_user_agent | stats count by http_user_agent
+
+In the case above, the only field returned from the search of the index is the http_user_agent field. No other event fields are unnecessarily captured and loaded into memory to produce the output due to the fields command.
+
+b) A subsearch is a search within a search. If your main search requires data as a result of another search, use Splunk's subsearch capability to combine two searches into one.
+
+Example 1 - 
+
+index=main [ search index=main http_status_code=500 
+     | top limit=1 server_ip
+     | fields + server_ip ] | top http_uri, client_ip
+
+Note the subsearch appears within brackets. 
+
+Query 1 - index=main http_status_code=500 | top limit=1 server_ip | fields + server_ip
+Query 2 - index=main server_ip=10.2.1.34 | top http_uri, client_ip     
+
+Example 2 - What shared field has a value that is not in another sourcetype. 
+
+sourcetype=a_sourcetype NOT [search sourcetype=b_sourcetype | fields field_val]
+
+c) The default number of results is set to 100. This is because a subsearch with a large number of results will tend to slow down performance.
+
+d) Use append once you have done a subsearch, you may want to add the results of that subsearch to another set of results.
+        SPL>  . . | append [subsearch]
+e) You can use the join command to join the results of the subsearch to your main search results. This will default to an inner join, which includes only events shared in common by the two searches. You can also specify an outer or left join. 
+        SPL> . . | join field_name [subsearch]
+
+---------------
+
+More Commands
+
+stats - Results Statistics
+
+index=xyz | stats count - Total number of events in search result
+index=xyz | stats count by src_ip - Row-wise counts of unique src_ips in search result
+index=xyz | stats count by src_ip, dest_ip - Row-wise counts of unique src_ip-dest_ip combinations in search result
+index=xyz | stats dc(src_ip) -
+Returns distinct number of src_ips
+index=xyz | stats values(src_ip) dc(src_ip) - Returns actual values and distinct number of src_ips
+index=xyz | stats min(bytes_in), max(bytes_in), avg(bytes_in) - Returns avg,min and max for bytes_in
+index=xyz | stats first(_time), last(_time) - Returns first and last times in search result
+
+---------------
+
+fields and table - Display results with Presentation
+
+index=xyz sourcetype="abc" | head 10 | fields [+/-] src_ip, dest_ip - Add/Remove Interesting Fields (only non-underscore fields)
+index=xyz sourcetype="abc" | head 10 | fields + src_ip, dest_ip | table src_ip, dest_ip, _raw - Important for optimization to add fields before table for heavy queries
+
+---------------
+
+head - Show latest results. Helps to try out complicated queries on a subset of result-set. Optimization
+
+index=xyz sourcetype="abc" | head 10 - Show top 10 results
+
+---------------
+
+top and rare - Show most frequently (top) and least frequently (rare) occuring events. Default limit is 10
+
+index=xyz | top limit=5 src_ip - top 5 results by count (most frequently occuring)
+index=xyz | rare limit=5 src_ip - rare 5 results by count (Least frequently occuring)
+
+---------------
+
+rename -
+
+index=xyz sourcetype="abc"
+| table src_ip
+| rename src_ip as "Source IP" - Column heading will be changed to "Source IP" in tabular view.
+
+If we use 'rename' early, we have to use new updated field name in rest of the query
+
+index=xyz sourcetype="abc"
+| rename src_ip as "Source IP" - Column heading will be changed to "Source IP" in tabular view.
+| table "Source IP"
+
+---------------
+ search and where commands
+
+By default splunk uses search command
+index=xyz | stats count - is actually  - search index=xyz | stats count
+
+This doesn't apply when search query starts with pipe (|)
+
+| metadata index=xyz type=sourcetypes | search count sourcetype="abc"
+
+search and where can be used interchangeably with few exceptions
+
+index=xyz | stats count by src_ip | search count=2 - Returns rows with count 2
+index=xyz | stats count by src_ip | where count=2 - Returns rows with count 2
+
+for lookups we should always use 'search' command
+
+---------------
+
+eval command -
+
+If you don't have test data you can use 'makeresults' command with eval as below
+
+| makeresults | eval field1="foo" | eval field2="bar"
+
+Using case with eval - Categorize Ips with eval
+
+index=xyz sourcetype="abc" | eval myEvalField = case(src_ip="10.0.0.1", "IS_GOOD_IP", src_ip="10.0.0.4", "IS_NOT_GOOD_IP", 1=1, "DID_ NOT_MATCH") | table src_ip, myEvalField
+
+---------------
+
+sort - Sort search results Asc or Desc
+
+index=xyz sourcetype="abc" | table _time | sort [+/-] _time
+index=xyz sourcetype="abc" | table bytes_in | sort [+/-] bytes_in
+index=xyz sourcetype="abc" | table bytes_in, bytes_out | sort [+/-] bytes_in, [+/-] bytes_out
+
+---------------
+
+dedup - Using stats command is faster than dedup
+
+dedup - Get a unique row for a particular field OR combination of fields
+ index=xyz sourcetype="abc" | dedup src_ip, dest_ip | table src_ip, dest_ip - Return unique combinations of src_ip and dest_ip
+
+index=xyz sourcetype="abc" | stats count by src_ip, dest_ip - Alternative to dedup command - Much faster
+
+index=xyz sourcetype="abc" | last(_time) as TIME count by src_ip, dest_ip
+
+index=xyz sourcetype="abc" | values(*) as * count by src_ip, dest_ip
+
+---------------
+
+chart/timechart/timewrap commands
+
+index=xyz | chart count by src_ip, dest_ip - Select Visualizations on web console or as param to chart
+
+index=xyz | chart count by _time src_ip - is same as - index=xyz | timechart count - time is used as X-axis bt default
+
+index=xyz | timechart span=1d count
+
+index=xyz | timechart span=1d count | timewrap 1week
+
+---------------
